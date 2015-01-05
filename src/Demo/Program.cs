@@ -55,8 +55,8 @@
                 Console.WriteLine("Press enter to continue...");
                 Console.ReadLine();
 
-                //-- Demo of nested DbContextScopes in the face of an exception. 
-                // If any of the provided users failed to get persisted, none should get persisted. 
+                //-- Demo of nested DbContextScopes in the face of an exception.
+                // If any of the provided users failed to get persisted, none should get persisted.
                 Console.WriteLine("Creating 2 new users called Julie and Marc in an atomic transaction. Will make the persistence of the second user fail intentionally in order to test the atomicity of the transaction...");
                 var julieSpec = new UserCreationSpec("Julie", "julie@example.com");
                 var marcSpec = new UserCreationSpec("Marc", "marc@example.com");

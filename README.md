@@ -34,7 +34,7 @@ public interface IDbContextScope : IDisposable
     void RefreshEntitiesInParentScope(IEnumerable entities);
     Task RefreshEntitiesInParentScopeAsync(IEnumerable entities);
 
-    IDbContextCollection DbContexts { get; }
+    TDbContext Get<TDbContext>() where TDbContext : DbContext;
 }
 ```
 
@@ -72,14 +72,14 @@ public void MarkUserAsPremium(Guid userId)
 }
 ```
 
-Within a `DbContextScope`, you can access the `DbContext` instances that the scope manages in two ways. You can get them via the `DbContextScope.DbContexts` property like this:
+Within a `DbContextScope`, you can access the `DbContext` instances that the scope manages in two ways. You can get them from the scope via the `DbContextScope.Get<DbContextType>()` method like this:
 
 ```language-csharp
 public void SomeServiceMethod(Guid userId)
 {
     using (var dbContextScope = _dbContextScopeFactory.Create())
     {
-        var user = dbContextScope.DbContexts.Get<MyDbContext>.Set<User>.Find(userId);
+        var user = dbContextScope.Get<MyDbContext>.Set<User>.Find(userId);
         [...]
         dbContextScope.SaveChanges();
     }
@@ -164,7 +164,7 @@ The `DbContextReadOnlyScope` class addresses this issue. This is its interface:
 ```language-csharp
 public interface IDbContextReadOnlyScope : IDisposable
 {
-    IDbContextCollection DbContexts { get; }
+    TDbContext Get<TDbContext>() where TDbContext : DbContext;
 }
 ```
 
