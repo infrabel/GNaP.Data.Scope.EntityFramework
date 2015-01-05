@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<!-- saved from url=(0041)http://mehdi.me/ambient-dbcontext-in-ef6/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><div class="fit-vids-style" id="fit-vids-style" style="display: none;">­<style>.fluid-width-video-wrapper{width:100%;position:relative;padding:0;}.fluid-width-video-wrapper iframe,.fluid-width-video-wrapper object,.fluid-width-video-wrapper embed {position:absolute;top:0;left:0;width:100%;height:100%;}</style></div><script async="" src="http://urls.api.twitter.com/1/urls/count.json?url=http://mehdi.me/ambient-dbcontext-in-ef6/&callback=jQuery111009953010557219386_1420471007370&_=1420471007371"></script>
+<meta http-equiv="Content-Type" content="text/html" charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<title>Managing DbContext the right way with Entity Framework 6: an in-depth guide</title>
+<meta name="description" content="">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" type="text/css" href="./Managing DbContext the right way with Entity Framework 6  an in-depth guide_files/style.css">
+<link rel="stylesheet" type="text/css" href="./Managing DbContext the right way with Entity Framework 6  an in-depth guide_files/custom.css">
+<link rel="stylesheet" type="text/css" href="./Managing DbContext the right way with Entity Framework 6  an in-depth guide_files/prism.css">
+<link href="./Managing DbContext the right way with Entity Framework 6  an in-depth guide_files/css" rel="stylesheet" type="text/css">
+<link href="./Managing DbContext the right way with Entity Framework 6  an in-depth guide_files/css(1)" rel="stylesheet" type="text/css">
+<link rel="canonical" href="./Managing DbContext the right way with Entity Framework 6  an in-depth guide_files/Managing DbContext the right way with Entity Framework 6  an in-depth guide.html">
+<meta property="og:site_name" content="Mehdi El Gueddari">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Managing DbContext the right way with Entity Framework 6: an in-depth guide">
+<meta property="og:description" content="UPDATE: the source code for DbContextScope is now available on GitHub: DbContextScope on GitHub. A bit of context This isn&#39;t the first post that has been written about managing the DbContext lifetime in Entity Framework-based applications. In fact, there is...">
+<meta property="og:url" content="http://mehdi.me/ambient-dbcontext-in-ef6/">
+<meta property="article:published_time" content="2014-08-07T12:56:36.000Z">
+<meta property="article:modified_time" content="2014-10-04T23:15:19.000Z">
+<meta property="article:tag" content=".NET">
+<meta property="article:tag" content="Entity Framework">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Managing DbContext the right way with Entity Framework 6: an in-depth guide">
+<meta name="twitter:description" content="UPDATE: the source code for DbContextScope is now available on GitHub: DbContextScope on GitHub. A bit of context This isn&#39;t the first post that has been written about managing the DbContext lifetime in Entity Framework-based applications. In fact, there is...">
+<meta name="twitter:url" content="http://mehdi.me/ambient-dbcontext-in-ef6/">
+<script async="" src="http://www.google-analytics.com/analytics.js"></script><script type="application/ld+json">
+{
+    "@context": "http://schema.org",
+    "@type": "Article",
+    "publisher": "Mehdi El Gueddari",
+    "author": {
+        "@type": "Person",
+        "name": "Mehdi El Gueddari",
+        "image": "http://mehdi.me/content/images/2014/Jan/Mehdi_BW2.jpg",
+        "url": "http://mehdi.me/author/mehdi-el-gueddari",
+        "sameAs": "https://tickmeet.com"
+    },
+    "headline": "Managing DbContext the right way with Entity Framework 6: an in-depth guide",
+    "url": "http://mehdi.me/ambient-dbcontext-in-ef6/",
+    "datePublished": "2014-08-07T12:56:36.000Z",
+    "dateModified": "2014-10-04T23:15:19.000Z",
+    "keywords": ".NET, Entity Framework",
+    "description": "UPDATE: the source code for DbContextScope is now available on GitHub: DbContextScope on GitHub. A bit of context This isn&#x27;t the first post that has been written about managing the DbContext lifetime in Entity Framework-based applications. In fact, there is..."
+}
+    </script>
+<meta name="generator" content="Ghost 0.5">
+<link rel="alternate" type="application/rss+xml" title="Mehdi El Gueddari" href="http://mehdi.me/rss/">
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-51999216-1', 'mehdi.me');
+  ga('send', 'pageview');
+
+  </script>
+</head>
+<body class="post-template tag--net tag-entity-framework" data-feedly-mini="yes">
+<header class="site-header ">
+<div class="header-content">
+<h1 class="logo">
+<a href="http://mehdi.me/" title="Blog Home"><img src="./Managing DbContext the right way with Entity Framework 6  an in-depth guide_files/mehdi.png" alt="Logo"></a>
+</h1>
+<h1 class="title-with-logo"><a href="http://mehdi.me/" title="Blog Home">Mehdi El Gueddari</a></h1>
+<div class="blog-description rte">
+London-based System Architect and senior .NET / iOS developer with a sweet spot for backend work and distributed systems.
+Open to discuss contracting opportunities.
+</div>
+<nav>
+<ul>
+<li>
+<a href="http://mehdi.me/">home</a>
+</li>
+<li>
+<a href="https://github.com/mehdime">github</a>
+</li>
+<li>
+<a href="https://www.linkedin.com/in/mehdielgueddari">linkedin</a>
+</li>
+<li>
+<a href="mailto:emehdi@gmail.com">contact</a>
+</li>
+</ul>
+</nav>
+</div>
+</header>
+<main class="site-content" role="main">
+<article class="post tag--net tag-entity-framework" data-permalink="http://mehdi.me/ambient-dbcontext-in-ef6/">
+<h1 class="post-title"><a href="./Managing DbContext the right way with Entity Framework 6  an in-depth guide_files/Managing DbContext the right way with Entity Framework 6  an in-depth guide.html">Managing DbContext the right way with Entity Framework 6: an in-depth guide</a></h1>
+<aside>
+<div class="post-data">
+<p>
+Posted on <time datetime="2014-08-07">07 Aug 2014</time>
+by Mehdi El Gueddari
+</p>
+</div>
+</aside>
+<section class="post-content rte">
+<p><strong>UPDATE:</strong> the source code for <code>DbContextScope</code> is now available on GitHub: <a href="https://github.com/mehdime/DbContextScope">DbContextScope on GitHub</a>.</p>
+<h2 id="abitofcontext">A bit of context</h2>
+<p>This isn't the first post that has been written about managing the <code>DbContext</code> lifetime in Entity Framework-based applications. In fact, <a href="http://lostechies.com/jimmybogard/2013/12/20/proper-sessiondbcontext-lifecycle-management/">there</a> <a href="http://msdn.microsoft.com/en-gb/data/jj729737.aspx">is</a> <a href="https://www.linkedin.com/groups/Entity-Framework-DbContext-Lifetime-Management-43315.S.5818868403309395968">no</a> <a href="http://blog.longle.net/2013/05/11/genericizing-the-unit-of-work-pattern-repository-pattern-with-entity-framework-in-mvc/">shortage</a> <a href="http://blog.longle.net/2013/07/30/bounded-dbcontext-with-generic-unit-of-work-generic-repositories-entity-framework-6-unity-3-0-in-mvc-4/">of</a> <a href="http://www.davepaquette.com/archive/2013/03/27/managing-entity-framework-dbcontext-lifetime-in-asp-net-mvc.aspx">articles</a> <a href="http://coding.abel.nu/2012/10/make-the-dbcontext-ambient-with-unitofworkscope/">discussing</a> <a href="http://jupaol.blogspot.co.uk/2012/10/entityframework-context-per-request.html">this</a> <a href="http://paulstovell.com/blog/unit-of-work">topic</a>.</p>
+<p>For many applications, the solutions presented in those articles (which generally revolve around using a DI container to inject <code>DbContext</code> instances with a PerWebRequest lifetime) will work just fine. They also have the merit of being very simple - at least at first sight.</p>
+<p>For certain types of applications however, the inherent limitations of these approaches pose problems. To the point that certain features become impossible to implement or require to resort to increasingly complex structures or increasingly ugly hacks to work around the way the <code>DbContext</code> instances are created and managed.</p>
+<p>Here is for example an overview of the real-world application that prompted me to re-think the way we managed our <code>DbContext</code> instances:</p>
+<ul>
+<li>The application is comprised of multiple web applications built with ASP.NET MVC and WebAPI. It also includes many background services implemented as console apps and Windows Services, including a home grown task scheduler service and multiple services that process messages from MSMQ and RabbitMQ queues. Most of the articles I linked to above make the assumption that all services will execute within the context of a web request. This is not the case here.</li>
+<li>It stores and reads data to / from multiple databases, including a main database, a secondary database, a reporting database and a logging database. Its domain model is separated into several independent groups, each with their own <code>DbContext</code> type. Any approach assuming a single <code>DbContext</code> type won't work here.</li>
+<li>It relies heavily on third-party remote APIs, such as the Facebook, Twitter or LinkedIn APIs. These aren't transactional. Many user actions require us to make multiple remote API calls before we can return a result to the user. Many of the articles I linked to make the assumption that "1 web request = 1 business transaction" that either gets committed or rolled back in an atomic manner (hence the idea of using a PerWebRequest-scope <code>DbContext</code> instance). This clearly doesn't apply here. Just because one remote API call failed doesn't mean that we can auto-magically "rollback" the results of any remote API call we may be done prior to the failed one (e.g. when you've used the Facebook API to post a status update on Facebook, you can't roll it back even if that operation was part of a wider user action that eventually failed as a whole). So in this application, a user action will often require us to execute multiple business transactions, which must be independently persisted. (you may argue that there might be ways to redesign the whole system to avoid finding ourselves in this sort of situation. And maybe there are. But that's how the application was originally designed, it works very well and that's what we have to work with). </li>
+<li>Many services are heavily parallelized, either by taking advantage of async I/O or (more often) by simply distributing tasks across multiple threads via the TPL's <code>Task.Run()</code> or <code>Parallel.Invoke()</code> methods. So the way we manage our <code>DbContext</code> instances must play well with multi-threading and parallel programming in general. Most of the common approaches suggested to manage <code>DbContext</code> instances don't work at all in this scenario.</li>
+</ul>
+<p>In this post, I'll go in depth into the various moving parts that are involved in <code>DbContext</code> lifetime management. We'll look at the pros and cons of several strategies commonly used to solve this problem. Finally, we'll look in details at one strategy (among others) to manage the <code>DbContext</code> lifetime that addresses all the challenges presented above and that should work for most applications regardless of their complexity. </p>
+<p>There is of course no such thing as one-size-fits-all. But by the end of this post, you should have all the tools and knowledge you need to make an informed decision for your specific application.</p>
+<p>Like most posts on this blog, this post is on the long and detailed side. It might take a while to read and digest. For an Entity Framework-based application, the strategy you choose to use to manage the lifetime of the <code>DbContext</code> will be one of the most important decisions you make. It will have a major impact on the correctness, maintainability and scalability of your application. So it's well worth taking some time to choose your strategy carefully and not rush into it. </p>
+<h2 id="anoteonterminology">A note on terminology</h2>
+<p>In this post, I'll often refer to the term "services". What I mean by that is not remote services (REST or otherwise). Instead, what I'm referring to is what is often called Service Objects. That is: the place where your business logic is implemented - the objects responsible for executing your business rules and defining your business transaction boundaries.</p>
+<p>Of course, depending on the design patterns that were used to create the architecture of your application (and depending on the imagination of whoever designed it - software developers are an imaginative bunch), your code base might be using different names for this. So what I call a "service" might very well be called a "workflow", an "orchestrator", an "executor", an "interactor", a "command", a "handler" or a variety of other names in your application. </p>
+<p>Not to mention that many application don't have a well-defined place where business logic is implemented and rely instead on implementing (and often duplicating) business logic on an ad-hoc basis where and when needed, e.g. in controllers in an MVC application.</p>
+<p>But none of this matters for this discussion. Whenever I say "service", read: "the place that implements the business logic", be it a random controller method or a well-defined service class in a separate service layer.</p>
+<h2 id="keypointstoconsider">Key points to consider</h2>
+<p>When coming up with or evaluating a <code>DbContext</code> lifetime management strategy, it's important to keep in mind the key scenarios and functionalities that it must support.</p>
+<p>Here are a few points that I would consider to be essential for most applications. </p>
+<h3 id="yourservicesmustbeincontrolofthebusinesstransactionboundarybutnotnecessarilyincontrolofthedbcontextinstancelifetime">Your services must be in control of the business transaction boundary (but not necessarily in control of the <code>DbContext</code> instance lifetime)</h3>
+<p>Perhaps the main source of confusion when it comes to managing <code>DbContext</code> instances is understanding the difference between the lifetime of a <code>DbContext</code> instance and the lifetime of a business transaction and how they relate.</p>
+<p><code>DbContext</code> implements the <a href="http://martinfowler.com/eaaCatalog/unitOfWork.html">Unit of Work pattern</a>:</p>
+<blockquote>
+<p>Maintains a list of objects affected by a business transaction and coordinates the writing out of changes and the resolution of concurrency problems.</p>
+</blockquote>
+<p>In practice, as you use a <code>DbContext</code> instance to load, update, add and delete persistent entities, the instance keeps track of those changes in memory. It doesn't however persist those changes to the underlying database until you call its <code>SaveChanges()</code> method. </p>
+<p>A service method, as defined above, is responsible for defining the boundary of a business transaction. </p>
+<p>The practical consequence of this is that:</p>
+<ul>
+<li>A service method <em>must use the same <code>DbContext</code> instance throughout the duration of a business transaction</em>. This is so that all the changes made to your persistent model are tracked and either committed to the underlying data store or rolled back in an atomic manner. </li>
+<li>Your services must be the sole components in your application responsible for calling the <code>DbContext.SaveChanges()</code> method at the end of a business transaction. Should other parts of the application call the <code>SaveChanges()</code> method (e.g. repository methods), you will end up with partially committed changes, leaving your data in an inconsistent state. </li>
+<li>The <code>SaveChanges()</code> method must be called exactly once at the end of each business transaction. Inadvertently calling this method in the middle of a business transaction may leave the system with inconsistent, partially committed changes.</li>
+</ul>
+<p>A <code>DbContext</code> instance can however span across multiple (sequential) business transactions. Once a business transaction has completed and has called the <code>DbContext.SaveChanges()</code> method to persist all the changes it made, it's entirely possible to just re-use the same <code>DbContext</code> instance for the next business transaction.</p>
+<p>I.e. the lifetime of a <code>DbContext</code> instance is not necessarily bound to the lifetime of a single business transaction. </p>
+<h3 id="prosandconsofmanagingthedbcontextinstancelifetimeindependentlyofthebusinesstransactionlifetime">Pros and cons of managing the <code>DbContext</code> instance lifetime independently of the business transaction lifetime.</h3>
+<h4 id="example">Example</h4>
+<p>A very common scenario where the lifetime of the <code>DbContext</code> instance can be maintained independently from the lifetime of business transactions is in the case of web applications. It's quite common to a use a configuration where a <code>DbContext</code> instance is created at the beginning of each web request, used by all the services invoked during the execution of the web request and eventually disposed of at the end of the request.</p>
+<h4 id="pros">Pros</h4>
+<p>There are two main reasons why you would want to decouple the lifetime of the <code>DbContext</code> instance from the business transaction lifetime.</p>
+<ul>
+<li><strong>Possible performance gains.</strong> Each <code>DbContext</code> instance maintains a first-level cache of all the entities its loads from the database. Whenever you query an entity by its primary key, the <code>DbContext</code> will first attempt to retrieve it from its first-level cache before defaulting to querying it from the database. Depending on your data query pattern, re-using the same <code>DbContext</code> across multiple sequential business transactions may result in a fewer database queries being made thanks to the <code>DbContext</code> first-level cache.</li>
+<li><strong>It enables lazy-loading.</strong> If your services return persistent entities (as opposed to returning view models or other sorts of DTOs) and you'd like to take advantage of lazy-loading on those entities, the lifetime of the <code>DbContext</code> instance from which those entities were retrieved must extend beyond the scope of the business transaction. If the service method disposed the <code>DbContext</code> instance it used before returning, any attempt to lazy-load properties on the returned entities would fail (whether or not using lazy-loading is a good idea is a different debate altogether which we won't get into here). In our web application example, lazy-loading would typically be used in controller action methods on entities returned by a separate service layer. In that case, the <code>DbContext</code> instance that was used by the service method to load these entities would need to remain alive for the duration of the web request (or at the very least until the action method has completed).</li>
+</ul>
+<h4 id="issueswithkeepingthedbcontextalivebeyondthescopeofabusinesstransaction">Issues with keeping the <code>DbContext</code> alive beyond the scope of a business transaction</h4>
+<p>While it can be fine to re-use a <code>DbContext</code> across multiple business transactions, its lifetime should still be kept short. Its first-level cache will become eventually become stale, which will lead to concurrency issues. If your application uses <a href="http://msdn.microsoft.com/en-ie/data/jj592904.aspx">optimistic concurrency</a> this will result in business transactions failing with a <code>DbUpdateConcurrencyException</code>. Using an instance-per-web-request lifetime for your <code>DbContext</code> in web apps will usually be fine as a web request is short-lived by nature. But using an instance-per-form lifetime in a desktop application, which you'll often find suggested, is a lot more questionable and requires careful thought before being adopted. </p>
+<p>Note that you can't re-use the same <code>DbContext</code> instance across multiple business transactions if you rely on <a href="http://blogs.msdn.com/b/marcelolr/archive/2010/07/16/optimistic-and-pessimistic-concurrency-a-simple-explanation.aspx">pessimistic concurrency</a>. Correctly implementing pessimistic concurrency involves keeping a database transaction with the correct isolation level open for the whole lifetime of a <code>DbContext</code> instance, which would prevent committing or rolling back individual business transactions independently.</p>
+<p>Re-using the same <code>DbContext</code> instance for more than one business transaction can also lead to disastrous bugs where a service method accidently commits the changes from a previously failed business transaction. </p>
+<p>Finally, managing your <code>DbContext</code> instance lifetime outside of your services tends to tie your application to a specific infrastructure, making it a lot less flexible and much more difficult to evolve and maintain in the long run. </p>
+<p>For example, for an application that starts off as a simple web application and relies an instance-per-web-request strategy to manage the lifetime of its <code>DbContext</code> instances, it's easy to fall into the trap of relying on lazy-loading in controllers or views or on passing persistent entities across service methods on the assumption that they will all use the same <code>DbContext</code> instance behind the scenes. When the need to introduce multi-threading or move operations to background Windows Services inevitably arises, this carefully constructed sand castle often collapses as there are no more web requests to bind <code>DbContext</code> instances to.</p>
+<p>As a result, it's advisable to avoid managing the lifetime of <code>DbContext</code> instances separately from business transactions. Instead, each service method (i.e. each business transaction) should create its own <code>DbContext</code> instance and dispose it at the end of the business transaction (i.e. before returning). </p>
+<p>This precludes using lazy-loading outside of services (which can be addressed by modeling your domain using DDD or by getting services to return DTOs instead of persistent entities) and poses a few other constraints (e.g. you shouldn't pass persistent entities into a service method as they won't be attached to the <code>DbContext</code> instance that the service will use). But it brings a lot of long-term benefits for the flexibility and maintenance of the application.</p>
+<h3 id="yourservicesmustbeincontrolofthedatabasetransactionscopeandisolationlevel">Your services must be in control of the database transaction scope and isolation level</h3>
+<p>If your application works against an RDMS that provides ACID properties for its transactions (and if you're using Entity Framework, you almost certainly are), it's essential for your services to be in control of the database transaction scope and isolation level. You can't write correct code otherwise.</p>
+<p>As we'll see later, Entity Framework wraps all write operations within an explicit database transaction by default. Coupled with a <a href="http://en.wikipedia.org/wiki/Isolation_(database_systems)#Read_committed">READ COMMITTED</a> isolation level - the default on SQL Server - this suits the needs of most business transactions. This is especially the case if you rely on <a href="http://en.wikipedia.org/wiki/Optimistic_concurrency_control">optimistic concurrency</a> to detect and avoid conflicting updates.</p>
+<p>Most applications however will still occasionally need to use other isolation levels for specific operations. </p>
+<p>It's very common for example to execute reporting queries where you have determined that dirty reads aren't an issue under a <a href="http://en.wikipedia.org/wiki/Isolation_(database_systems)#Read_uncommitted">READ UNCOMMITTED</a> isolation level in order to eliminate lock contention with other queries (although if your environment allows it, you'll probably want to use <a href="http://msdn.microsoft.com/en-us/library/tcbchxcb(v=vs.110).aspx">READ COMMITTED SNAPSHOT</a> instead). </p>
+<p>And some business rules might require the use the REPEATABLE READ or even SERIALIZABLE isolation levels (especially if your application uses pessimistic concurrency control). In which case the service will need to have explicit control over the transaction scope.</p>
+<h3 id="thewayyourdbcontextismanagedshouldbeindependentofthearchitectureoftheapplication">The way your <code>DbContext</code> is managed should be independent of the architecture of the application</h3>
+<p>The architecture of a software system and the design patterns it relies on always evolve over time to adapt to new constraints, business requirements and increasing load. </p>
+<p>You don't want the strategy you choose to manage the lifetime of your <code>DbContext</code> to tie you to a specific architecture and prevent you from being able to evolve it as and when needed.</p>
+<h3 id="thewayyourdbcontextismanagedshouldbeindependentoftheapplicationtype">The way your <code>DbContext</code> is managed should be independent of the application type</h3>
+<p>While most applications today start off as web applications, the strategy you choose to manage the lifetime of your <code>DbContext</code> shouldn't assume that your service method will be called from within the context a web request. More generally, your service layer (if you have one) should be independent of the type of application it's used from.</p>
+<p>It won't be long until you need to create command-line utilities for your support team to execute ad-hoc maintenance tasks or Windows Services to handle scheduled tasks and long-running background operations. When this happens, you want to be able to reference the assembly that contains your services and just use any service you need from your console or Windows Service application. You most definitely don't want to have to completely re-engineer the way your <code>DbContext</code> instances are managed just to be able to use your services from a different type of application.</p>
+<h3 id="yourdbcontextmanagementstrategyshouldsupportmultipledbcontextderivedtypes">Your <code>DbContext</code> management strategy should support multiple DbContext-derived types</h3>
+<p>If your application needs to connect to multiple databases (for example if it uses separate reporting, logging and / or auditing databases) or if you have split your domain model into multiple aggregate groups, you will have to manage multiple <code>DbContext</code>-derived types. </p>
+<p>For those coming from an NHibernate background, this is the equivalent of having to manage multiple <code>SessionFactory</code> instances.</p>
+<p>Whatever strategy you choose should be able to let services use the appropriate <code>DbContext</code> for their need.</p>
+<h3 id="yourdbcontextmanagementstrategyshouldworkwithef6sasyncworkflow">Your <code>DbContext</code> management strategy should work with EF6's async workflow</h3>
+<p>In .NET 4.5, ADO.NET introduced (at very long last) <a href="http://blogs.msdn.com/b/adonet/archive/2012/04/20/using-sqldatareader-s-new-async-methods-in-net-4-5-beta.aspx">support for async database queries</a>. Async support was then included in Entity Framework 6, allowing you to use a fully async workflow for all read and write queries made through EF. </p>
+<p>Needless to say that whatever system you use to manage your <code>DbContext</code> instance must play well with Entity Framework's async features.</p>
+<h2 id="dbcontextsdefaultbehaviour"><code>DbContext</code>'s default behaviour</h2>
+<p>In general, <code>DbContext</code>'s default behaviour can be described as: "does the right thing by default". </p>
+<p>There are several key behaviours of Entity Framework you should always keep in mind however. This list documents EF's behaviour when working against SQL Server. There might be differences when using other data stores. </p>
+<h3 id="dbcontextisnotthreadsafe"><code>DbContext</code> is not thread-safe</h3>
+<p>You must <em>never</em> access your <code>DbContext</code>-derived instance from multiple threads simultaneously. This might result on multiple queries being sent concurrently over the same database connection. It will also corrupt the first-level cache that <code>DbContext</code> maintains to offer its Identity Map, change tracking and Unit of Work functionalities.</p>
+<p>In a multi-threaded application, you must create and use a separate instance of your <code>DbContext</code>-derived class in each thread.</p>
+<p>So if <code>DbContext</code> isn't thread-safe, how can it support the async query features introduced with EF6? Simply by preventing more than one async operation being executed at any given time (as documented in the Entity Framework <a href="https://entityframework.codeplex.com/wikipage?title=Task-based%20Asynchronous%20Pattern%20support%20in%20EF.#ThreadSafety">specifications for its async pattern support</a>). If you attempt to execute multiple actions on the same <code>DbContext</code> instance in parallel, for example by kicking off multiple SELECT queries in parallel via the the <code>DbSet&lt;T&gt;.ToListAsync()</code> method, you will get a <code>NotSupportedException</code> with the following message:</p>
+<pre><code>A second operation started on this context before a previous asynchronous operation completed. Use 'await' to ensure that any asynchronous operations have completed before calling another method on this context. Any instance members are not guaranteed to be thread safe.
+</code></pre>
+<p>Entity Framework's async features are there to support an asynchronous programming model, not to enable parallelism. </p>
+<h3 id="changesareonlypersistedwhensavechangesiscalled">Changes are only persisted when SaveChanges() is called</h3>
+<p>Any changes made to your entities, be it updates, inserts or deletes, are only persisted to the database when the <code>DbContext.SaveChanges()</code> method is called. If a <code>DbContext</code> instance is disposed before its <code>SaveChanges()</code> method was called, none of the inserts, updates or deletes done through this <code>DbContext</code> will be persisted to the underlying data store.</p>
+<p>The canonical manner to implement a business transaction with Entity Framework is therefore:</p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">using</span> <span class="token punctuation">(</span><span class="token keyword">var</span> context <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">MyDbContext</span><span class="token punctuation">(</span>ConnectionString<span class="token punctuation">)</span><span class="token punctuation">)</span>  
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/* 
+     * Business logic here. Add, update, delete data
+     * through the 'context'.
+     * 
+     * Throw in case of any error to roll back all 
+     * changes.
+     * 
+     * Do not call SaveChanges() until the business
+     * transaction is complete - i.e. no partial or 
+     * intermediate saves. SaveChanges() must be 
+     * called exactly once per business transaction.
+     *
+     * If you find yourself needing to call SaveChanges() 
+     * multiple times within a business transaction, it means
+     * that you are in fact implementing multiple business 
+     * transactions within a single service method. 
+     * This is the perfect recipe for disaster. Clients of
+     * your service class will naturally assume that your 
+     * service method will either commit or roll-back all
+     * changes in an atomic manner when it might in fact
+     * end up doing a partial roll-back, leaving the system
+     * in an inconsistent state.
+     *
+     * In this case, refactor your service method into 
+     * multiple service methods that each implement once
+     * and exactly one business transaction. 
+     */</span>
+     <span class="token punctuation">[</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">]</span>
+
+   <span class="token comment" spellcheck="true"> // Complete the business transaction
+</span>   <span class="token comment" spellcheck="true"> // and persist all changes.
+</span>    context<span class="token punctuation">.</span><span class="token function">SaveChanges<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+
+   <span class="token comment" spellcheck="true"> // Changes cannot be rolled back after this point. 
+</span>   <span class="token comment" spellcheck="true"> // context.SaveChanges() should be the last statement
+</span>   <span class="token comment" spellcheck="true"> // of any business transaction.
+</span><span class="token punctuation">}</span>
+</code></pre>
+<h4 id="asidenotefornhibernateveterans">A side note for NHibernate veterans</h4>
+<p>If you're coming from an NHibernate background, the way Entity Framework persists changes to the database is one of the major differences between EF and NHibernate. </p>
+<p>In NHibernate, the <code>Session</code> operates by default in <a href="http://www.nhforge.org/doc/nh/en/#manipulatingdata-flushing">AutoFlush mode</a>. In this mode, the <code>Session</code> will automatically persists all changes made to entities to the database before executing any 'select' query, ensuring consistency between the persisted entities and their in-memory state within the context of a <code>Session</code>. Entity Framework's default behaviour is the equivalent of setting <code>Session.FlushMode</code> to <code>Never</code> in NHibernate.</p>
+<p>This EF behaviour can result in subtle bugs as it is possible to be in a situation where queries may unexpectedly return stale or incorrect data. This wouldn't be possible with NHibernate's default behaviour. On the other side, it dramatically simplifies the issue of database transaction lifetime management. </p>
+<p>One of the trickiest issue in NHibernate is to correctly manage the database transaction lifetime. Since NHibernate's <code>Session</code> can persists outstanding changes to the database automatically at any time throughout its lifetime and may do so multiple times within a single business transaction, there is no single, well-defined point or method where to start the database transaction to ensure that all changes are either committed or rolled-back in an atomic manner. </p>
+<p>The only reliable method to correctly manage the database transaction lifetime with NHibernate is to wrap all your service methods in an explicit database transaction. This is what you'll see done in pretty much every NHibernate-based application. </p>
+<p>A side-effect of this approach is that it requires keeping a database connection and transaction open for often longer than strictly necessary. It therefore increases database lock contention and the probability of database deadlocks occurring. It's also very easy for a developer to inadvertently execute a long-running computation or a remote service call without realizing or even knowing that they're within the context of an open database transaction. </p>
+<p>With the EF approach, only the <code>SaveChanges()</code> method must be wrapped in an explicit database transaction (unless you need a REPEATABLE READ or SERIALIZABLE isolation level of course), ensuring that the database connection and transaction are kept as short-lived as possible.</p>
+<h3 id="readsareexecutedwithinanautocommittransaction">Reads are executed within an AutoCommit transaction</h3>
+<p><code>DbContext</code> doesn't start explicit database transactions for read queries. It instead relies on SQL Server's <a href="http://technet.microsoft.com/en-us/library/ms187878(v=sql.105).aspx">Autocommit Transactions</a> (or <a href="http://technet.microsoft.com/en-us/library/ms188317(v=sql.105).aspx">Implicit Transactions </a> if you've enabled them but that would be a relatively unusual setup). Autocommit (or Implicit) transactions will use whatever default transaction isolation level the database engine has been configured to use (READ COMMITTED by default for SQL Server).</p>
+<p>If you've been around the block for a while, and particularly if you've used NHibernate before, you may have heard that <a href="http://www.hibernatingrhinos.com/products/nhprof/learn/alert/donotuseimplicittransactions">AutoCommit (or Implicit) transactions are bad</a>. And indeed, relying on Autocommit transactions for writes can have a <a href="http://dba.stackexchange.com/a/43256">disastrous impact on performance</a>.</p>
+<p>The story is very different for reads however. As you can see by yourself by running the SQL script below, neither Autocommit nor Implicit transactions have any significant performance impact for <code>SELECT</code> statements. </p>
+<pre class=" language-sql"><code class=" language-sql"><span class="token comment" spellcheck="true">/* 
+ * Execute 100,000 SELECT queries under autocommit, 
+ * implicit and explicit database transactions. 
+ * 
+ * These scripts assumes that the database they are 
+ * running against contains a Users table with an 'Id' 
+ * column of data type INT.
+ * 
+ * If running from SQL Server Management Studio,
+ * right-click in the query window, go to 
+ * Query Options -&gt; Results and tick "Discard results
+ * after execution". Otherwise, what you'll be measuring
+ * will be the Result Grid redrawing performance and not
+ * the query execution time.
+ */</span>
+
+
+<span class="token comment" spellcheck="true">---------------------------------------------------
+</span><span class="token comment" spellcheck="true">-- Autocommit transaction
+</span><span class="token comment" spellcheck="true">-- 6 seconds
+</span><span class="token keyword">DECLARE</span> @i <span class="token keyword">INT</span>  
+<span class="token keyword">SET</span> @i <span class="token operator">=</span> <span class="token number">0</span>
+
+<span class="token keyword">WHILE</span> @i &lt; <span class="token number">100000</span>  
+    <span class="token keyword">BEGIN</span> 
+        <span class="token keyword">SELECT</span>  Id
+        <span class="token keyword">FROM</span>    dbo<span class="token punctuation">.</span>Users
+        <span class="token keyword">WHERE</span>   Id <span class="token operator">=</span> @i
+        <span class="token keyword">SET</span> @i <span class="token operator">=</span> @i <span class="token operator">+</span> <span class="token number">1</span>
+    <span class="token keyword">END</span>
+
+<span class="token comment" spellcheck="true">---------------------------------------------------
+</span><span class="token comment" spellcheck="true">-- Implicit transaction
+</span><span class="token comment" spellcheck="true">-- 6 seconds
+</span><span class="token keyword">SET</span> IMPLICIT_TRANSACTIONS <span class="token keyword">ON</span>  
+<span class="token keyword">DECLARE</span> @i <span class="token keyword">INT</span>  
+<span class="token keyword">SET</span> @i <span class="token operator">=</span> <span class="token number">0</span>  
+<span class="token keyword">WHILE</span> @i &lt; <span class="token number">100000</span>  
+    <span class="token keyword">BEGIN</span> 
+        <span class="token keyword">SELECT</span>  Id
+        <span class="token keyword">FROM</span>    dbo<span class="token punctuation">.</span>Users
+        <span class="token keyword">WHERE</span>   Id <span class="token operator">=</span> @i
+        <span class="token keyword">SET</span> @i <span class="token operator">=</span> @i <span class="token operator">+</span> <span class="token number">1</span>
+    <span class="token keyword">END</span>
+<span class="token keyword">COMMIT</span><span class="token punctuation">;</span>  
+<span class="token keyword">SET</span> IMPLICIT_TRANSACTIONS <span class="token keyword">OFF</span>
+
+
+<span class="token comment" spellcheck="true">----------------------------------------------------
+</span><span class="token comment" spellcheck="true">-- Explicit transaction
+</span><span class="token comment" spellcheck="true">-- 6 seconds
+</span><span class="token keyword">DECLARE</span> @i <span class="token keyword">INT</span>  
+<span class="token keyword">SET</span> @i <span class="token operator">=</span> <span class="token number">0</span>  
+<span class="token keyword">BEGIN</span> <span class="token keyword">TRAN</span>  
+<span class="token keyword">WHILE</span> @i &lt; <span class="token number">100000</span>  
+    <span class="token keyword">BEGIN</span>
+        <span class="token keyword">SELECT</span>  Id
+        <span class="token keyword">FROM</span>    dbo<span class="token punctuation">.</span>Users
+        <span class="token keyword">WHERE</span>   Id <span class="token operator">=</span> @i
+        <span class="token keyword">SET</span> @i <span class="token operator">=</span> @i <span class="token operator">+</span> <span class="token number">1</span>
+    <span class="token keyword">END</span>
+<span class="token keyword">COMMIT</span> <span class="token keyword">TRAN</span>  
+</code></pre>
+<p>Obviously, if you need to use an isolation level higher than the default READ COMMITTED, all reads will need to be part of an explicit database transaction. In that case, you will have to start the transaction yourself - EF will not do this for you. But this would typically only be done on an ad-hoc basis for specific business transactions. Entity Framework's default behaviour should suit the vast majority of business transactions.</p>
+<h3 id="writesareexecutedwithinanexplicittransaction">Writes are executed within an explicit transaction</h3>
+<p>Entity Framework automatically wraps all the queries made by the <code>DbContext.SaveChanges()</code> method in a single explicit database transaction, therefore ensuring that all the changes applied to the context are either committed or rolled-back in full. </p>
+<p>It will use whatever default transaction isolation level the database engine has been configured to use (READ COMMITTED by default for SQL Server).</p>
+<h4 id="asidenotefornhibernateveterans">A side note for NHibernate veterans</h4>
+<p>This is another major difference between EF and NHibernate. With NHibernate, database transactions are entirely in the hands of developers. NHibernate's <code>Session</code> will never start an explicit database transaction automatically.</p>
+<h3 id="youcanoverrideefsdefaultbehaviourandcontrolthedatabasetransactionscopeandisolationlevel">You can override EF's default behaviour and control the database transaction scope and isolation level</h3>
+<p>With Entity Framework 6, taking explicit control of the database transaction scope and isolation level is as simple as it should be:</p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">using</span> <span class="token punctuation">(</span><span class="token keyword">var</span> context <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">MyDbContext</span><span class="token punctuation">(</span>ConnectionString<span class="token punctuation">)</span><span class="token punctuation">)</span>  
+<span class="token punctuation">{</span>
+    <span class="token keyword">using</span> <span class="token punctuation">(</span><span class="token keyword">var</span> transaction <span class="token operator">=</span> context<span class="token punctuation">.</span><span class="token function">BeginTransaction<span class="token punctuation">(</span></span>IsolationLevel<span class="token punctuation">.</span>RepeatableRead<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token punctuation">[</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">]</span>
+        context<span class="token punctuation">.</span><span class="token function">SaveChanges<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        transaction<span class="token punctuation">.</span><span class="token function">Commit<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>An obvious side-effect of manually controlling the database transaction scope is that you are now forcing the database connection and transaction to remain open for the duration of the transaction scope. </p>
+<p>You should be careful to keep this scope as short-lived as possible. Keeping a database transaction running for too long can have a significant impact on your application's performance and scalability. In particular, it's generally a good idea to refrain from calling other service methods within an explicit transaction scope - they might be executing long-running operations unaware that they have been invoked within an open database transaction scope. </p>
+<h3 id="theresnobuiltinwaytooverridethedefaultisolationlevelusedforautocommitandautomaticexplicittransactions">There's no built-in way to override the default isolation level used for AutoCommit and automatic explicit transactions</h3>
+<p>As mentioned earlier, the AutoCommit transactions EF relies on for read queries and the explicit transaction it automatically starts when <code>SaveChanges()</code> is called use whatever default isolation level the database engine has been configured with. </p>
+<p>There's unfortunately no built-in way to override this isolation level. If you'd like to use another isolation level, you must start and manage the database transaction yourself. </p>
+<h3 id="thedatabaseconnectionopenbydbcontextwillenrollinanambienttransactionscope">The database connection open by DbContext will enroll in an ambient <code>TransactionScope</code></h3>
+<p>Alternatively, you can also use the <code>TransactionScope</code> class to control the transaction scope and isolation level. The database connection that Entity Framework opens will enroll in the ambient <code>TransactionScope</code>. </p>
+<p>Prior to EF6, using <code>TransactionScope</code> was the only practical way to control the database transaction scope and isolation level.</p>
+<p>In practice, and unless you actually need a distributed transaction, you should avoid using <code>TransactionScope</code>. <code>TransactionScope</code>, and distributed transactions in general, are not necessary for most applications and tend to introduce more problems than they solve. EF's documentation has more details on <a href="http://msdn.microsoft.com/en-gb/data/dn456843.aspx#transactionScope">working with <code>TransactionScope</code> with Entity Framework</a> if you really need distributed transactions.</p>
+<h3 id="dbcontextinstancesshouldbedisposedofbutyoullprobablybeokiftheyrenot">DbContext instances <em>should</em> be disposed of (but you'll probably be OK if they're not)</h3>
+<p><code>DbContext</code> implements <code>IDisposable</code>. Its instances should therefore be disposed of as soon as they're not needed anymore.</p>
+<p>In practice however, and unless you choose to explicitly manage the database connection or transaction that the DbContext uses, not calling <code>DbContext.Dispose()</code> won't cause any issues <a href="http://blog.jongallant.com/2012/10/do-i-have-to-call-dispose-on-dbcontext.html#.U9efX_ldXpo">as Diego Vega, a EF team member, explains</a>. </p>
+<p>This is good news as a lot of the code you'll find in the wild fails to dispose of <code>DbContext</code> instances properly. This is particularly the case for code that attempts to manage <code>DbContext</code> instance lifetimes via a DI container, which can be a lot trickier than it sounds. </p>
+<p>A DI container like StructureMap for example doesn't support decommissioning the components it created. As a result, if you rely on StructureMap to create your <code>DbContext</code> instances, they will never be disposed of, regardless of what lifecycle you choose for them. The only correct way to manage disposable components with a DI container like this is to significantly complicate your DI configuration and use nested dependency injection containers as <a href="http://codebetter.com/jeremymiller/2010/01/06/how-dovetail-uses-structuremap-with-nhibernate/">Jeremy Miller demonstrates</a>. </p>
+<h2 id="ambientdbcontextvsexplicitdbcontextvsinjecteddbcontext">Ambient DbContext vs Explicit DbContext vs Injected Dbcontext</h2>
+<p>A key decision you'll have to make at the start of any Entity Framework-based project is how your code will handle passing the <code>DbContext</code> instances down to the method / layer that will make the actual database queries. </p>
+<p>As we've seen above, the responsibility of creating and disposing the <code>DbContext</code> lies with the top-level service methods. The data access code, i.e. the code that actually uses the <code>DbContext</code> instance, will however often be made in a separate part of the code - be it in a private method deep down the service implementation, in a query object or in a separate repository layer. </p>
+<p>The <code>DbContext</code> instance that the top-level service method creates must therefore somehow find its way down to these methods.</p>
+<p>There are 3 school of thoughts when it comes to making the <code>DbContext</code> instance available to the data access code: ambient, explicit or injected. Each approach has its pros and cons, which we'll examine now.</p>
+<h3 id="explicitdbcontext">Explicit DbContext</h3>
+<h4 id="whatitlookslike">What it looks like</h4>
+<p>With the explicit <code>DbContext</code> approach, the top-level service method creates a <code>DbContext</code> instance and simply passes it down the stack as a method parameter until it finally reaches the method that implements the data access part. In a traditional 3-tier architecture with both a service and a repository layer, this would look like this:</p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">UserService</span> <span class="token punctuation">:</span> IUserService  
+<span class="token punctuation">{</span>
+    <span class="token keyword">private</span> <span class="token keyword">readonly</span> IUserRepository _userRepository<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token function">UserService<span class="token punctuation">(</span></span>IUserRepository userRepository<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>userRepository <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">ArgumentNullException</span><span class="token punctuation">(</span><span class="token string">"userRepository"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        _userRepository <span class="token operator">=</span> userRepository<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">MarkUserAsPremium<span class="token punctuation">(</span></span>Guid userId<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">using</span> <span class="token punctuation">(</span><span class="token keyword">var</span> context <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">MyDbContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token keyword">var</span> user <span class="token operator">=</span> _userRepository<span class="token punctuation">.</span><span class="token function">Get<span class="token punctuation">(</span></span>context<span class="token punctuation">,</span> userId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            user<span class="token punctuation">.</span>IsPremiumUser <span class="token operator">=</span> <span class="token keyword">true</span><span class="token punctuation">;</span>
+            context<span class="token punctuation">.</span><span class="token function">SaveChanges<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">UserRepository</span> <span class="token punctuation">:</span> IUserRepository  
+<span class="token punctuation">{</span>
+    <span class="token keyword">public</span> User <span class="token function">Get<span class="token punctuation">(</span></span>MyDbContext context<span class="token punctuation">,</span> Guid userId<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> context<span class="token punctuation">.</span>Set<span class="token operator">&lt;</span>User<span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Find<span class="token punctuation">(</span></span>userId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>(in this intentionally contrived example, the repository layer is of course completely pointless. In a real-work application, you would expect the repository layer to be a lot richer. In addition, you could of course abstract your <code>DbContext</code> behind an "IDbContext" of sorts and create it via an abstract factory if you really didn't want to have to have a direct dependency on Entity Framework in your services. The principle would remain the same).</p>
+<h4 id="thegood">The Good</h4>
+<p>This approach is by far and away the simplest approach. It results in code that's very easy to understand and maintain, even by developers new to the code base. </p>
+<p>There's no magic anywhere. The <code>DbContext</code> instance doesn't materialize out of thin air. There's a clear and obvious place where the context is created. And it's really easy to climb up the stack and find it if you're wondering where a particular <code>DbContext</code> instance is coming from.</p>
+<h4 id="thebad">The Bad</h4>
+<p>The main drawback of this approach is that it requires you to pollute all your repository methods (if you have a repository layer) as well as most of your service methods with a mandatory <code>DbContext</code> parameter (or some sort of <code>IDbContext</code> abstraction if you don't want to be tied to a concrete implementation - but the point still stands). You could see this as being a sort of Method Injection pattern.</p>
+<p>That your repository methods require to be provided with an explicit <code>DbContext</code> parameter isn't too much of an issue. In fact, it can even be seen as a good thing as it removes any potential ambiguity as to which context they'll run their queries against.</p>
+<p>Things are quite different in your service layer however. Chances are that most of your service methods won't use the <code>DbContext</code> at all, particularly if you've isolated your data access code away in query objects or in a repository layer. As a result, these methods will only require to be provided with a <code>DbContext</code> parameter so that they can pass it down the line until it eventually reaches whatever method actually uses it. </p>
+<p>It can get quite ugly. Particularly if your application uses multiple <code>DbContext</code>, resulting in service methods potentially requiring two or more mandatory <code>DbContext</code> parameters. It also muddies your method contracts as your service method are now forced to ask for a parameter that they neither need nor use but require purely to satisfy the dependency of a downstream method.</p>
+<p><a href="http://blogs.msmvps.com/jonskeet/2010/11/08/the-importance-of-context-and-a-question-of-explicitness/">Jon Skeet wrote an interesting article on the topic of explicitness vs ambient</a> but couldn't come up with a good solution either.</p>
+<p>Nevertheless, the simplicity and foolproofness of this approach is hard to beat. </p>
+<h3 id="ambientdbcontext">Ambient DbContext</h3>
+<h4 id="whatitlookslike">What it looks like</h4>
+<p>NHibernate users will be very familiar with this approach as the <a href="http://blogs.msdn.com/b/ploeh/archive/2007/07/23/ambientcontext.aspx">ambient context pattern</a> is the predominant approach used in the NHibernate world to manage NH's <code>Session</code> (NHibernate's equivalent to EF's <code>DbContext</code>). NHibernate even comes with built-in support for this pattern, which it calls <a href="http://www.nhforge.org/doc/nh/en/#architecture-current-session">contextual sessions</a>.</p>
+<p>In .NET itself, this pattern is used quite extensively. You've probably already used <code>HttpContext.Current</code> or the <code>TransactionScope</code> class, both of which rely on the ambient context pattern.</p>
+<p>With this approach, the top-level service method not only creates the <code>DbContext</code> to use for the current business transaction but it also registers it as the ambient <code>DbContext</code>. The data access code can then just retrieve the ambient <code>DbContext</code> whenever it needs it. No need to pass the <code>DbContext</code> instance around anymore. </p>
+<p>Anders Abel has written <a href="http://coding.abel.nu/2012/10/make-the-dbcontext-ambient-with-unitofworkscope/">a simple implementation of an ambient DbContext</a> that relies on a <code>ThreadStatic</code> variable to store the ambient <code>DbContext</code>. Have a look - there's less to it than it sounds. </p>
+<h4 id="thegood">The Good</h4>
+<p>The advantages of this approach are obvious. Your service and repository methods are now free of <code>DbContext</code> parameters, making your interfaces cleaner and your method contracts clearer as they can now only request the parameters that they actually need to do their job. No need to pass <code>DbContext</code> instances all over the place anymore. </p>
+<p>As with the explicit approach, the creation and disposal of the <code>DbContext</code> instance is in a clear, well-defined and logical place.</p>
+<h4 id="thebad">The Bad</h4>
+<p>This approach does however introduce a certain amount of magic which can certainly make the code more difficult to understand and maintain. When looking at the data access code, it's not necessarily easy to figure out where the ambient <code>DbContext</code> is coming from. You just have to hope that someone somehow registered it before calling the data access code.</p>
+<p>If your application uses multiple <code>DbContext</code> classes, e.g. if it connects to multiple databases or if you have split your domain model into separate model groups, it can be difficult for the top-level service method to know which <code>DbContext</code> object(s) it must create and register. With the explicit approach, the data access methods require to provided with whatever <code>DbContext</code> object they need as a method parameter. There is therefore no ambiguity possible. But with an ambient context approach, the top-level service method must somehow know what <code>DbContext</code> type the downstream data access code will require. There are ways to solve this issue in a fairly clean manner however as we'll see later.</p>
+<p>Finally, the ambient <code>DbContext</code> example I linked to above works fine in a single-threaded model. But if you intend to use <a href="http://msdn.microsoft.com/en-ie/data/jj819165.aspx">Entity Framework's async query feature</a>, this won't fly. After an async operation, you will most likely find yourself in another thread than the one where the <code>DbContext</code> was created. In many cases (although not in all cases - this is where async gets tricky), it means that your ambient <code>DbContext</code> will be gone. This is fixable as well but it will require some advanced understanding of how multi-threading, the TPL and async works behind the scenes in .NET. We'll have a look at this later in this post.</p>
+<h3 id="injecteddbcontext">Injected DbContext</h3>
+<h4 id="whatitlookslike">What it looks like</h4>
+<p>Last but not least, the injected <code>DbContext</code> approach is the most often mentioned strategy in articles and blog posts addressing the issue of managing the <code>DbContext</code> lifetime.</p>
+<p>With this approach, you let your DI container manage the lifetime of your <code>DbContext</code> and inject it into whatever component needs it (your repository objects for example). </p>
+<p>This is what it looks like: </p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">UserService</span> <span class="token punctuation">:</span> IUserService  
+<span class="token punctuation">{</span>
+    <span class="token keyword">private</span> <span class="token keyword">readonly</span> IUserRepository _userRepository<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token function">UserService<span class="token punctuation">(</span></span>IUserRepository userRepository<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>userRepository <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">ArgumentNullException</span><span class="token punctuation">(</span><span class="token string">"userRepository"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        _userRepository <span class="token operator">=</span> userRepository<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">MarkUserAsPremium<span class="token punctuation">(</span></span>Guid userId<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> user <span class="token operator">=</span> _userRepository<span class="token punctuation">.</span><span class="token function">Get<span class="token punctuation">(</span></span>context<span class="token punctuation">,</span> userId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        user<span class="token punctuation">.</span>IsPremiumUser <span class="token operator">=</span> <span class="token keyword">true</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">UserRepository</span> <span class="token punctuation">:</span> IUserRepository  
+<span class="token punctuation">{</span>
+    <span class="token keyword">private</span> <span class="token keyword">readonly</span> MyDbContext _context<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token function">UserRepository<span class="token punctuation">(</span></span>MyDbContext context<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>context <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">ArgumentNullException</span><span class="token punctuation">(</span><span class="token string">"context"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        _context <span class="token operator">=</span> context<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> User <span class="token function">Get<span class="token punctuation">(</span></span>Guid userId<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> _context<span class="token punctuation">.</span>Set<span class="token operator">&lt;</span>User<span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Find<span class="token punctuation">(</span></span>userId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>You then need to configure your DI container to create an instance of the <code>DbContext</code> with an appropriate lifetime on object graph creation. A common advice you'll find is to use a PerWebRequest lifetime for web apps and PerForm lifetime for desktop apps.</p>
+<h4 id="thegood">The Good</h4>
+<p>The advantage here is similar to that of the ambient approach: the code isn't littered with <code>DbContext</code> instances being passed all over the place. This approach goes one step further still: there is no <code>DbContext</code> to be seen anywhere in the service code. The service is completely oblivious of Entity Framework. Which might sound good a first sight but quickly leads to a lot of problems.</p>
+<h4 id="thebad">The Bad</h4>
+<p>Despite its popularity, this approach has significant drawbacks and limitations. It's important to understand them before adopting this approach.</p>
+<h5 id="alotofmagic">A lot of magic</h5>
+<p>The first issue is that this approach relies very heavily on magic. And when it comes to managing the correctness and consistency of your data - your most precious asset - magic isn't a word you want to hear too often.</p>
+<p>Where do these <code>DbContext</code> instances come from? How and where is the business transaction boundary defined? If a service depends on two different repositories, will they both have access to the same <code>DbContext</code> instance or will they each have their own instance? </p>
+<p>If you're a back-end developer working on a EF-based project, you must know the answers to these questions if you want to be able to write correct code. </p>
+<p>The answers here aren't obvious and will require you to pour through your DI container configuration code to find out. And as we've seen earlier, getting this configuration right isn't as trivial as it may seem at first sight and may end up being fairly complex and / or subtle. </p>
+<h5 id="unclearbusinesstransactionboundaries">Unclear business transaction boundaries</h5>
+<p>Perhaps the most glaring issue in the code sample above is: who is responsible for committing changes to the data store? I.e. who is calling the <code>DbContext.SaveChanges()</code> method? It's unclear. </p>
+<p>You could inject the <code>DbContext</code> into your service for the sole purpose of calling its <code>SaveChanges()</code> method. That would be rather baffling and very error-prone code. Why would the service method call <code>SaveChanges()</code> on a context object that it neither created nor used? What changes would be saved?</p>
+<p>Alternatively, you could define a <code>SaveChanges()</code> method on all your repositories, which would just delegate to the underlying <code>DbContext</code>. The service method would then just call <code>SaveChanges()</code> on the repository itself. This would be very misleading code, as it would imply that each repository implement their own unit-of-work and can persist their changes independently of the other repositories. Which would of course be incorrect as they would in fact all use the same <code>DbContext</code> instance behind the scenes. </p>
+<p>Another approach sometimes seen in the wild is to let the DI container call <code>SaveChanges()</code> before decommissioning the <code>DbContext</code> instance. A disastrous approach that would merit a blog post of its own to examine. </p>
+<p>In short: the DI container is an infrastructure-level component - it has no knowledge of the business logic the components it manages implement. The <code>DbContext.SaveChanges()</code> method on the other side defines a business transaction boundary - i.e. it's a business logic concern (and a critical one at that). Mixing those two unrelated concerns together will quickly cause <em>a lot</em> of pain.</p>
+<p>All that being said, if you subscribe to the <a href="http://ayende.com/blog/3955/repository-is-the-new-singleton">Repository is Dead</a> movement, the issue of defining who is calling <code>DbContext.SaveChanges()</code> shouldn't arise as your services will use the <code>DbContext</code> instance directly. They will therefore be the natural place for <code>SaveChanges()</code> to be called.</p>
+<p>There is however a number of other issues you will run into with an injected <code>DbContext</code> regardless of the architectural style of your application. </p>
+<h5 id="forcesyourservicestobecomestateful">Forces your services to become stateful</h5>
+<p>A notable one is that <code>DbContext</code> isn't a service. It's a resource. And a Disposable one to boot. By injecting it into whatever layer implement your data access, you're making that layer, and by extension all the layers above which would be pretty much the entire application, stateful. </p>
+<p>It's not the end of the world but it certainly complicates DI container configuration. Having stateless services provides tremendous flexibility and makes the configuration of their lifetime a non-issue (any lifetime would do and singleton is often your best bet). As soon as you introduce stateful services, careful consideration has to be given to your service lifetimes. </p>
+<p>It often starts off easy (PerWebRequest or Transient lifetime for everything which suits a simple web app well) and then descends into more complexity as console apps, Windows Services and others inevitably make their appearance. </p>
+<h5 id="preventsmultithreading">Prevents multi-threading</h5>
+<p>Another issue (related to the previous one) that will inevitably bite you quite hard is that an injected <code>DbContext</code> prevents you from being able to introduce multi-threading or any sort of parallel execution flows in your services. </p>
+<p>Remember that <code>DbContext</code> (just like <code>Session</code> in NHibernate) isn't thread-safe. If you need to execute multiple tasks in parallel in a service, you must make sure that each task works against its own <code>DbContext</code> instance or the whole thing will blow up at runtime. This is impossible to do with the injected DbContext approach since the service isn't in control of the <code>DbContext</code> instance creation and doesn't have any way to create new ones.</p>
+<p>How can you fix this? Not easily. </p>
+<p>Your first instinct is probably to change your services to depend on a DbContext factory instead of depending directly on a DbContext. That would allow them to create their own <code>DbContext</code> instances when needed. But that would effectively defeat the whole point of the injected <code>DbContext</code> approach. If services create their own DbContext instances via a factory, these instances can't be injected anymore. Which means that services will have to explicitly pass those <code>DbContext</code> instances down the layers to whatever components need them (e.g. the repositories). So you're effectively back to the explicit DbContext approach discussed earlier. I can think of a few ways in which this could be solved but all of them feel more like hacks than clean and elegant solutions.</p>
+<p>Another way to approach the issue would be to add a few more layers of complexity, introduce a queuing middleware like RabbitMQ and let it distribute the workload for you. Which may or may not work depending on why you need to introduce parallelism. But in any case, you may neither need nor want the additional overhead and complexity.</p>
+<p>With an injected <code>DbContext</code>, you're simply better off limiting yourself to single-threaded code or at least to a single logical flow of execution. Which is perfectly fine for many applications but it will become a major limitation in certain cases.</p>
+<h2 id="dbcontextscopeasimplecorrectandflexiblewaytomanagedbcontextinstances">DbContextScope: a simple, correct and flexible way to manage DbContext instances</h2>
+<p>Time to look at a better way to manage those <code>DbContext</code> instances. </p>
+<p>The approach presented below relies on <code>DbContextScope</code>, a custom component that implements the ambient DbContext approach presented earlier. The full source code for <code>DbContextScope</code> and the classes it depends on <a href="https://github.com/mehdime/DbContextScope">is on GitHub</a>. </p>
+<p>If you're familiar with the <code>TransactionScope</code> class, then you already know how to use a <code>DbContextScope</code>. They're very similar in essence - the only difference is that <code>DbContextScope</code> creates and manages <code>DbContext</code> instances instead of database transactions. But just like <code>TransactionScope</code>, <code>DbContextScope</code> is ambient, can be nested, can have its nesting behaviour disabled and works fine with async execution flows.</p>
+<p>This is the <code>DbContextScope</code> interface:</p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">IDbContextScope</span> <span class="token punctuation">:</span> IDisposable  
+<span class="token punctuation">{</span>
+    <span class="token keyword">void</span> <span class="token function">SaveChanges<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    Task <span class="token function">SaveChangesAsync<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">void</span> <span class="token function">RefreshEntitiesInParentScope<span class="token punctuation">(</span></span>IEnumerable entities<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    Task <span class="token function">RefreshEntitiesInParentScopeAsync<span class="token punctuation">(</span></span>IEnumerable entities<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    IDbContextCollection DbContexts <span class="token punctuation">{</span> <span class="token keyword">get</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>The purpose of a <code>DbContextScope</code> is to create and manage the <code>DbContext</code> instances used within a code block. A <code>DbContextScope</code> therefore effectively defines the boundary of a business transaction. I'll explain later why I didn't name it "UnitOfWork" or "UnitOfWorkScope", which would have been a more commonly used terminology for this.</p>
+<p>You can instantiate a <code>DbContextScope</code> directly. Or you can take a dependency on <code>IDbContextScopeFactory</code>, which provides convenience methods to create a <code>DbContextScope</code> with the most common configurations:</p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">IDbContextScopeFactory</span>  
+<span class="token punctuation">{</span>
+    IDbContextScope <span class="token function">Create<span class="token punctuation">(</span></span>DbContextScopeOption joiningOption <span class="token operator">=</span> DbContextScopeOption<span class="token punctuation">.</span>JoinExisting<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    IDbContextReadOnlyScope <span class="token function">CreateReadOnly<span class="token punctuation">(</span></span>DbContextScopeOption joiningOption <span class="token operator">=</span> DbContextScopeOption<span class="token punctuation">.</span>JoinExisting<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    IDbContextScope <span class="token function">CreateWithTransaction<span class="token punctuation">(</span></span>IsolationLevel isolationLevel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    IDbContextReadOnlyScope <span class="token function">CreateReadOnlyWithTransaction<span class="token punctuation">(</span></span>IsolationLevel isolationLevel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    IDisposable <span class="token function">SuppressAmbientContext<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="typicalusage">Typical usage</h3>
+<p>With <code>DbContextScope</code>, your typical service method would look like this:</p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">MarkUserAsPremium<span class="token punctuation">(</span></span>Guid userId<span class="token punctuation">)</span>  
+<span class="token punctuation">{</span>
+    <span class="token keyword">using</span> <span class="token punctuation">(</span><span class="token keyword">var</span> dbContextScope <span class="token operator">=</span> _dbContextScopeFactory<span class="token punctuation">.</span><span class="token function">Create<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> user <span class="token operator">=</span> _userRepository<span class="token punctuation">.</span><span class="token function">Get<span class="token punctuation">(</span></span>userId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        user<span class="token punctuation">.</span>IsPremiumUser <span class="token operator">=</span> <span class="token keyword">true</span><span class="token punctuation">;</span>
+        dbContextScope<span class="token punctuation">.</span><span class="token function">SaveChanges<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>Within a <code>DbContextScope</code>, you can access the <code>DbContext</code> instances that the scope manages in two ways. You can get them via the <code>DbContextScope.DbContexts</code> property like this:</p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">SomeServiceMethod<span class="token punctuation">(</span></span>Guid userId<span class="token punctuation">)</span>  
+<span class="token punctuation">{</span>
+    <span class="token keyword">using</span> <span class="token punctuation">(</span><span class="token keyword">var</span> dbContextScope <span class="token operator">=</span> _dbContextScopeFactory<span class="token punctuation">.</span><span class="token function">Create<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> user <span class="token operator">=</span> dbContextScope<span class="token punctuation">.</span>DbContexts<span class="token punctuation">.</span>Get<span class="token operator">&lt;</span>MyDbContext<span class="token operator">&gt;</span><span class="token punctuation">.</span>Set<span class="token operator">&lt;</span>User<span class="token operator">&gt;</span><span class="token punctuation">.</span><span class="token function">Find<span class="token punctuation">(</span></span>userId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">[</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">]</span>
+        dbContextScope<span class="token punctuation">.</span><span class="token function">SaveChanges<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>But that's of course only available in the method that created the <code>DbContextScope</code>. If you need to access the ambient <code>DbContext</code> instances anywhere else (e.g. in a repository class), you can just take a dependency on <code>IAmbientDbContextLocator</code>, which you would use like this:</p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">UserRepository</span> <span class="token punctuation">:</span> IUserRepository  
+<span class="token punctuation">{</span>
+    <span class="token keyword">private</span> <span class="token keyword">readonly</span> IAmbientDbContextLocator _contextLocator<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token function">UserRepository<span class="token punctuation">(</span></span>IAmbientDbContextLocator contextLocator<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>contextLocator <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">ArgumentNullException</span><span class="token punctuation">(</span><span class="token string">"contextLocator"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        _contextLocator <span class="token operator">=</span> contextLocator<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> User <span class="token function">Get<span class="token punctuation">(</span></span>Guid userId<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> _contextLocator<span class="token punctuation">.</span>Get<span class="token operator">&lt;</span>MyDbContext<span class="token operator">&gt;</span><span class="token punctuation">.</span>Set<span class="token operator">&lt;</span>User<span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Find<span class="token punctuation">(</span></span>userId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>Those <code>DbContext</code> instances are created lazily and the <code>DbContextScope</code> keeps track of them to ensure that only one instance of any given DbContext type is ever created within its scope. </p>
+<p>You'll note that the service method doesn't need to know which type of <code>DbContext</code> will be required during the course of the business transaction. It only needs to create a <code>DbContextScope</code> and any component that needs to access the database within that scope will request the type of <code>DbContext</code> they need. </p>
+<h3 id="nestingscopes">Nesting scopes</h3>
+<p>A <code>DbContextScope</code> can of course be nested. Let's say that you already have a service method that can mark a user as a premium user like this:</p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">MarkUserAsPremium<span class="token punctuation">(</span></span>Guid userId<span class="token punctuation">)</span>  
+<span class="token punctuation">{</span>
+    <span class="token keyword">using</span> <span class="token punctuation">(</span><span class="token keyword">var</span> dbContextScope <span class="token operator">=</span> _dbContextScopeFactory<span class="token punctuation">.</span><span class="token function">Create<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> user <span class="token operator">=</span> _userRepository<span class="token punctuation">.</span><span class="token function">Get<span class="token punctuation">(</span></span>userId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        user<span class="token punctuation">.</span>IsPremiumUser <span class="token operator">=</span> <span class="token keyword">true</span><span class="token punctuation">;</span>
+        dbContextScope<span class="token punctuation">.</span><span class="token function">SaveChanges<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>You're implementing a new feature that requires being able to mark a group of users as premium within a single business transaction. You can easily do it like this:</p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">MarkGroupOfUsersAsPremium<span class="token punctuation">(</span></span>IEnumerable<span class="token operator">&lt;</span>Guid<span class="token operator">&gt;</span> userIds<span class="token punctuation">)</span>  
+<span class="token punctuation">{</span>
+    <span class="token keyword">using</span> <span class="token punctuation">(</span><span class="token keyword">var</span> dbContextScope <span class="token operator">=</span> _dbContextScopeFactory<span class="token punctuation">.</span><span class="token function">Create<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">foreach</span> <span class="token punctuation">(</span><span class="token keyword">var</span> userId <span class="token keyword">in</span> userIds<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+           <span class="token comment" spellcheck="true"> // The child scope created by MarkUserAsPremium() will
+</span>           <span class="token comment" spellcheck="true"> // join our scope. So it will re-use our DbContext instance(s)
+</span>           <span class="token comment" spellcheck="true"> // and the call to SaveChanges() made in the child scope will
+</span>           <span class="token comment" spellcheck="true"> // have no effect.
+</span>            <span class="token function">MarkUserAsPremium<span class="token punctuation">(</span></span>userId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+       <span class="token comment" spellcheck="true"> // Changes will only be saved here, in the top-level scope,
+</span>       <span class="token comment" spellcheck="true"> // ensuring that all the changes are either committed or
+</span>       <span class="token comment" spellcheck="true"> // rolled-back atomically.
+</span>        dbContextScope<span class="token punctuation">.</span><span class="token function">SaveChanges<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>(this would of course be a very inefficient way to implement this particular feature but it demonstrates the point)</p>
+<p>This makes creating a service method that combines the logic of multiple other service methods trivial. </p>
+<h3 id="readonlyscopes">Read-only scopes</h3>
+<p>If a service method is read-only, having to call <code>SaveChanges()</code> on its <code>DbContextScope</code> before returning can be a pain. But not calling it isn't an option either as: </p>
+<ol>
+<li>It will make code review and maintenance difficult (did you intend not to call <code>SaveChanges()</code> or did you forget to call it?) </li>
+<li>If you requested an explicit database transaction to be started (we'll see later how to do it), not calling <code>SaveChanges()</code> will result in the transaction being rolled back. Database monitoring systems will usually interpret transaction rollbacks as an indication of an application error. Having spurious rollbacks is not a good idea.</li>
+</ol>
+<p>The <code>DbContextReadOnlyScope</code> class addresses this issue. This is its interface:</p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">IDbContextReadOnlyScope</span> <span class="token punctuation">:</span> IDisposable  
+<span class="token punctuation">{</span>
+    IDbContextCollection DbContexts <span class="token punctuation">{</span> <span class="token keyword">get</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>And this is how you use it:</p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">public</span> <span class="token keyword">int</span> <span class="token function">NumberPremiumUsers<span class="token punctuation">(</span></span><span class="token punctuation">)</span>  
+<span class="token punctuation">{</span>
+    <span class="token keyword">using</span> <span class="token punctuation">(</span>_dbContextScopeFactory<span class="token punctuation">.</span><span class="token function">CreateReadOnly<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> _userRepository<span class="token punctuation">.</span><span class="token function">GetNumberOfPremiumUsers<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="asyncsupport">Async support</h3>
+<p><code>DbContextScope</code> works with async execution flows as you would expect:</p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">public</span> <span class="token keyword">async</span> Task <span class="token function">RandomServiceMethodAsync<span class="token punctuation">(</span></span>Guid userId<span class="token punctuation">)</span>  
+<span class="token punctuation">{</span>
+    <span class="token keyword">using</span> <span class="token punctuation">(</span><span class="token keyword">var</span> dbContextScope <span class="token operator">=</span> _dbContextScopeFactory<span class="token punctuation">.</span><span class="token function">Create<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> user <span class="token operator">=</span> <span class="token keyword">await</span> _userRepository<span class="token punctuation">.</span><span class="token function">GetAsync<span class="token punctuation">(</span></span>userId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">var</span> orders <span class="token operator">=</span> <span class="token keyword">await</span> _orderRepository<span class="token punctuation">.</span><span class="token function">GetOrdersForUserAsync<span class="token punctuation">(</span></span>userId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token punctuation">[</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">]</span>
+
+        <span class="token keyword">await</span> dbContextScope<span class="token punctuation">.</span><span class="token function">SaveChangesAsync<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>In the example above, the <code>OrderRepository.GetOrdersForUserAsync()</code> method will be able to see and access the ambient DbContext instance despite the fact that it's being called in a separate thread than the one where the <code>DbContextScope</code> was initially created.</p>
+<p>This is made possible by the fact that <code>DbContextScope</code> stores itself in the CallContext. The CallContext automatically flows through async points. If you're curious about how it all works behind the scenes, Stephen Toub has written <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/06/15/executioncontext-vs-synchronizationcontext.aspx">an excellent blog post about it</a>. But if all you want to do is use <code>DbContextScope</code>, you just have to know that: it just works.</p>
+<p><strong>WARNING</strong>: There is one thing that you <em>must</em> always keep in mind when using any async flow with <code>DbContextScope</code>. Just like <code>TransactionScope</code>, <code>DbContextScope</code> only supports being used within a single logical flow of execution. </p>
+<p>I.e. if you attempt to start multiple parallel tasks within the context of a <code>DbContextScope</code> (e.g. by creating multiple threads or multiple TPL <code>Task</code>), you will get into big trouble. This is because the ambient <code>DbContextScope</code> will flow through all the threads your parallel tasks are using. If code in these threads need to use the database, they will all use the same ambient <code>DbContext</code> instance, resulting the same the <code>DbContext</code> instance being used from multiple threads simultaneously. </p>
+<p>In general, parallelizing database access within a single business transaction has little to no benefits and only adds significant complexity. Any parallel operation performed within the context of a business transaction should not access the database.</p>
+<p>However, if you really need to start a parallel task within a <code>DbContextScope</code> (e.g. to perform some out-of-band background processing independently from the outcome of the business transaction), then you <strong>must</strong> suppress the ambient context before starting the parallel task. Which you can easily do like this:</p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">RandomServiceMethod<span class="token punctuation">(</span></span><span class="token punctuation">)</span>  
+<span class="token punctuation">{</span>
+    <span class="token keyword">using</span> <span class="token punctuation">(</span><span class="token keyword">var</span> dbContextScope <span class="token operator">=</span> _dbContextScopeFactory<span class="token punctuation">.</span><span class="token function">Create<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+       <span class="token comment" spellcheck="true"> // Do some work that uses the ambient context
+</span>        <span class="token punctuation">[</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">]</span>
+
+        <span class="token keyword">using</span> <span class="token punctuation">(</span>_dbContextScopeFactory<span class="token punctuation">.</span><span class="token function">SuppressAmbientContext<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+           <span class="token comment" spellcheck="true"> // Kick off parallel tasks that shouldn't be using the
+</span>           <span class="token comment" spellcheck="true"> // ambient context here. E.g. create new threads,
+</span>           <span class="token comment" spellcheck="true"> // enqueue work items on the ThreadPool or create 
+</span>           <span class="token comment" spellcheck="true"> // TPL Tasks. 
+</span>            <span class="token punctuation">[</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">]</span>
+        <span class="token punctuation">}</span>
+
+       <span class="token comment" spellcheck="true"> // The ambient context is available again here.
+</span>       <span class="token comment" spellcheck="true"> // Can keep doing more work as usual.
+</span>        <span class="token punctuation">[</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">]</span>
+
+        dbContextScope<span class="token punctuation">.</span><span class="token function">SaveChanges<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="creatinganonnesteddbcontextscope">Creating a non-nested DbContextScope</h3>
+<p>This is an advanced feature that I would expect most applications to never need. Tread carefully when using this as it can create tricky issues and quickly lead to a maintenance nightmare. </p>
+<p>Sometimes, a service method may need to persist its changes to the underlying database regardless of the outcome of overall business transaction it may be part of. This would be the case if:</p>
+<ul>
+<li>It needs to record cross-cutting concern information that shouldn't be rolled-back even if the business transaction fails. A typical example would be logging or auditing records.</li>
+<li>It needs to record the result of an operation that cannot be rolled back. A typical example would be service methods that interact with non-transactional remote services or APIs. E.g. if your service method uses the Facebook API to post a new status update on Facebook and then records the newly created status update in the local database, that record must be persisted even if the overall business transaction fails because of some other error occurring after the Facebook API call. The Facebook API isn't transactional - it's impossible to "rollback" a Facebook API call. The result of that API call should therefore never be rolled back. </li>
+</ul>
+<p>In that case, you can pass a value of <code>DbContextScopeOption.ForceCreateNew</code> as the <code>joiningOption</code> parameter when creating a new <code>DbContextScope</code>. This will create a <code>DbContextScope</code> that will not join the ambient scope even if one exists:</p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">RandomServiceMethod<span class="token punctuation">(</span></span><span class="token punctuation">)</span>  
+<span class="token punctuation">{</span>
+    <span class="token keyword">using</span> <span class="token punctuation">(</span><span class="token keyword">var</span> dbContextScope <span class="token operator">=</span> _dbContextScopeFactory<span class="token punctuation">.</span><span class="token function">Create<span class="token punctuation">(</span></span>DbContextScopeOption<span class="token punctuation">.</span>ForceCreateNew<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+       <span class="token comment" spellcheck="true"> // We've created a new scope. Even if that service method
+</span>       <span class="token comment" spellcheck="true"> // was called by another service method that has created its 
+</span>       <span class="token comment" spellcheck="true"> // own DbContextScope, we won't be joining it. 
+</span>       <span class="token comment" spellcheck="true"> // Our scope will create new DbContext instances and won't
+</span>       <span class="token comment" spellcheck="true"> // re-use the DbContext instances that the parent scope uses.
+</span>        <span class="token punctuation">[</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">]</span>
+
+       <span class="token comment" spellcheck="true"> // Since we've forced the creation of a new scope,
+</span>       <span class="token comment" spellcheck="true"> // this call to SaveChanges() will persist
+</span>       <span class="token comment" spellcheck="true"> // our changes regardless of whether or not the
+</span>       <span class="token comment" spellcheck="true"> // parent scope (if any) saves its changes or rolls back.
+</span>        dbContextScope<span class="token punctuation">.</span><span class="token function">SaveChanges<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>The major issue with doing this is that this service method will use separate <code>DbContext</code> instances than the ones used in the rest of that business transaction. Here are a few basic rules to always follow in that case in order to avoid weird bugs and maintenance nightmares:</p>
+<h4 id="1persistententityreturnedbyaservicemethodmustalwaysbeattachedtotheambientcontext">1. Persistent entity returned by a service method must always be attached to the ambient context</h4>
+<p>If you force the creation of a new <code>DbContextScope</code> (and therefore of new <code>DbContext</code> instances) instead of joining the ambient one, your service method must <strong>never</strong> return persistent entities that were created / retrieved within that new scope. This would be completely unexpected and will lead to humongous complexity.</p>
+<p>The client code calling your service method may be a service method itself that created its own <code>DbContextScope</code> and therefore expects all service methods it calls to use that same ambient scope (this is the whole point of using an ambient context). It will therefore expect any persistent entity returned by your service method to be attached to the ambient <code>DbContext</code>.</p>
+<p>Instead, either:</p>
+<ul>
+<li>Don't return persistent entities. This is the easiest, cleanest, most foolproof method. E.g. if your service creates a new domain model object, don't return it. Return its ID instead and let the client load the entity in its own <code>DbContext</code> instance if it needs the actual object.</li>
+<li>If you absolutely need to return a persistent entity, switch back to the ambient context, load the entity you want to return in the ambient context and return that.</li>
+</ul>
+<h4 id="2uponexitaservicemethodmustmakesurethatallmodificationsitmadetopersistententitieshavebeenreplicatedintheparentscope">2. Upon exit, a service method must make sure that all modifications it made to persistent entities have been replicated in the parent scope</h4>
+<p>If your service method forces the creation of a new <code>DbContextScope</code> and then modifies persistent entities in that new scope, it must make sure that the parent ambient scope (if any) can "see" those modification when it returns. </p>
+<p>I.e. if the <code>DbContext</code> instances in the parent scope had already loaded the entities you modified in their first-level cache (ObjectStateManager), your service method must force a refresh of these entities to ensure that the parent scope doesn't end up working with stale versions of these objects.</p>
+<p>The <code>DbContextScope</code> class has a handy helper method that makes this fairly painless:</p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">RandomServiceMethod<span class="token punctuation">(</span></span>Guid accountId<span class="token punctuation">)</span>  
+<span class="token punctuation">{</span>
+   <span class="token comment" spellcheck="true"> // Forcing the creation of a new scope (i.e. we'll be using our 
+</span>   <span class="token comment" spellcheck="true"> // own DbContext instances)
+</span>    <span class="token keyword">using</span> <span class="token punctuation">(</span><span class="token keyword">var</span> dbContextScope <span class="token operator">=</span> _dbContextScopeFactory<span class="token punctuation">.</span><span class="token function">Create<span class="token punctuation">(</span></span>DbContextScopeOption<span class="token punctuation">.</span>ForceCreateNew<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> account <span class="token operator">=</span> _accountRepository<span class="token punctuation">.</span><span class="token function">Get<span class="token punctuation">(</span></span>accountId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        account<span class="token punctuation">.</span>Disabled <span class="token operator">=</span> <span class="token keyword">true</span><span class="token punctuation">;</span>
+
+       <span class="token comment" spellcheck="true"> // Since we forced the creation of a new scope,
+</span>       <span class="token comment" spellcheck="true"> // this will persist our changes to the database
+</span>       <span class="token comment" spellcheck="true"> // regardless of what the parent scope does.
+</span>        dbContextScope<span class="token punctuation">.</span><span class="token function">SaveChanges<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+       <span class="token comment" spellcheck="true"> // If the caller of this method had already
+</span>       <span class="token comment" spellcheck="true"> // loaded that account object into their own
+</span>       <span class="token comment" spellcheck="true"> // DbContext instance, their version
+</span>       <span class="token comment" spellcheck="true"> // has now become stale. They won't see that
+</span>       <span class="token comment" spellcheck="true"> // this account has been disabled and might
+</span>       <span class="token comment" spellcheck="true"> // therefore execute incorrect logic.
+</span>       <span class="token comment" spellcheck="true"> // So make sure that the version our caller
+</span>       <span class="token comment" spellcheck="true"> // has is up-to-date.
+</span>        dbContextScope<span class="token punctuation">.</span><span class="token function">RefreshEntitiesInParentScope<span class="token punctuation">(</span></span><span class="token keyword">new</span><span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token punctuation">{</span> account <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="whydbcontextscopeandnotunitofwork">Why DbContextScope and not UnitOfWork?</h2>
+<p>The first version of the <code>DbContextScope</code> class I wrote was actually called <code>UnitOfWork</code>. This is arguably the most commonly used name for this type of component. </p>
+<p>But as I tried to use that <code>UnitOfWork</code> component in a real-world application, I kept getting really confused as to how I was supposed to use it and what it really did. This is despite the fact that I was the one who researched, designed and implemented it and despite the fact that I knew what it did and how it worked inside-out. Yet, I kept getting myself confused and had to often take a step back and think hard about how this "unit of work" related to the actual problem I was trying to solve: managing my DbContext instances. </p>
+<p>If even I, who had spent a significant amount of time researching, designing and implementing this component, kept getting confused when trying to use it, there clearly wasn't a hope that anyone else would find it easy to use it.</p>
+<p>So I renamed it <code>DbContextScope</code> and suddenly everything became clearer.</p>
+<p>The main issue I had with the <code>UnitOfWork</code> I believe is that at the application-level, it often doesn't make a lot of sense. At the lower levels, for example at the database level, a "unit of work" is a very clear and concrete concept. This is Martin Fowler's definition of a unit of work: </p>
+<blockquote>
+<p>Maintains a list of objects affected by a business transaction and coordinates the writing out of changes and the resolution of concurrency problems.</p>
+</blockquote>
+<p>There is no ambiguity at to what a unit of work means at the database level.</p>
+<p>At the application level however, a "unit of work" is a very vague concept that could mean everything and nothing. And it's certainly not clear how this "unit of work" relates to Entity Framework, to the issue of managing <code>DbContext</code> instances and to the problem of ensuring that the persistent entities we're manipulating are attached to the right DbContext instance.</p>
+<p>As a result, any developer trying to use a "<code>UnitOfWork</code>" would have to pour through its source code to find out what it really does. The definition of the unit of work pattern is simply too vague to be useful at the application level.</p>
+<p>In fact, for many applications, an application-level "unit of work" doesn't even make any sense. Many applications will have to use several non-transactional services during the course of a business transaction, such as remote APIs or non-transactional legacy components. The changes made there cannot be rolled back. Pretending otherwise and is counter-productive, confusing and makes it even harder to write correct code. </p>
+<p>A <code>DbContextScope</code> on the other side does what it says on the tin. Nothing more, nothing less. It doesn't pretend to be what it's not. And I've found that this simple name change significantly reduced the cognitive load required to use that component and to verify that it was being used correctly. </p>
+<p>Of course, naming this component <code>DbContextScope</code> means that you can't hide the fact that you're using Entity Framework from your services anymore. <code>UnitOfWork</code> is a conveniently vague term that allows you to abstract away the persistence mechanism used in the lower layers. Whether or not abstracting EF away from your service layer is a good thing is another debate that we won't get into here.</p>
+<h2 id="seeitinaction">See it in action</h2>
+<p>The <a href="https://github.com/mehdime/DbContextScope">source code on GitHub</a> includes a demo application that demonstrates the most common use-cases.</p>
+<h2 id="howdbcontextscopeworks">How <code>DbContextScope</code> works</h2>
+<p>The <a href="https://github.com/mehdime/DbContextScope">source code</a> is well commented and I would encourage you to read through it. In addition, this <a href="http://blogs.msdn.com/b/pfxteam/archive/2012/06/15/executioncontext-vs-synchronizationcontext.aspx">excellent blog post by Stephen Toub on the ExecutionContext</a> is a mandatory read if you'd like to fully understand how the ambient context pattern was implemented in <code>DbContextScope</code>.</p>
+<h2 id="furtherreading">Further reading</h2>
+<p>The <a href="http://romiller.com/">personal blog of Rowan Miller</a>, the program manager for the Entity Framework team, is a must-read for any developer working on an Entity Framework-based application.</p>
+<h2 id="bonusmaterial">Bonus material</h2>
+<h4 id="wherenottocreateyourdbcontextinstances">Where <em>not</em> to create your DbContext instances</h4>
+<p>An Entity Framework anti-pattern commonly seen in the wild is to implement the creation and disposal of <code>DbContext</code> in data access methods (e.g. in repository methods in a traditional 3-tier application). It usually looks like this:</p>
+<pre class=" language-csharp"><code class=" language-csharp"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">UserService</span> <span class="token punctuation">:</span> IUserService  
+<span class="token punctuation">{</span>
+    <span class="token keyword">private</span> <span class="token keyword">readonly</span> IUserRepository _userRepository<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token function">UserService<span class="token punctuation">(</span></span>IUserRepository userRepository<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>userRepository <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">ArgumentNullException</span><span class="token punctuation">(</span><span class="token string">"userRepository"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        _userRepository <span class="token operator">=</span> userRepository<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">MarkUserAsPremium<span class="token punctuation">(</span></span>Guid userId<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> user <span class="token operator">=</span> _userRepository<span class="token punctuation">.</span><span class="token function">Get<span class="token punctuation">(</span></span>userId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        user<span class="token punctuation">.</span>IsPremiumUser <span class="token operator">=</span> <span class="token keyword">true</span><span class="token punctuation">;</span>
+        _userRepository<span class="token punctuation">.</span><span class="token function">Save<span class="token punctuation">(</span></span>user<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">UserRepository</span> <span class="token punctuation">:</span> IUserRepository  
+<span class="token punctuation">{</span>
+    <span class="token keyword">public</span> User <span class="token function">Get<span class="token punctuation">(</span></span>Guid userId<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">using</span> <span class="token punctuation">(</span><span class="token keyword">var</span> context <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">MyDbContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> context<span class="token punctuation">.</span>Set<span class="token operator">&lt;</span>User<span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Find<span class="token punctuation">(</span></span>userId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">Save<span class="token punctuation">(</span></span>User user<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">using</span> <span class="token punctuation">(</span><span class="token keyword">var</span> context <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">MyDbContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+           <span class="token comment" spellcheck="true"> // [...] 
+</span>           <span class="token comment" spellcheck="true"> // (either attach the provided entity to the context 
+</span>           <span class="token comment" spellcheck="true"> // or load it from the context and update its properties
+</span>           <span class="token comment" spellcheck="true"> // from the provided entity)
+</span>
+            context<span class="token punctuation">.</span><span class="token function">SaveChanges<span class="token punctuation">(</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>By doing this, you're loosing pretty much every feature that Entity Framework provides via the <code>DbContext</code>, including its 1st-level cache, its identity map, its unit-of-work, and its change tracking and lazy-loading abilities. That's because in the scenario above, a new <code>DbContext</code> instance is created for every database query and disposed immediately afterwards, hence preventing the <code>DbContext</code> instance from being able to track the state of your data objects across the entire business transaction. </p>
+<p>You're effectively reducing Entity Framework to a basic ORM in the literal sense of the term: an mapper from your objects to their relational representation in the database.</p>
+<p>There are some applications where this type of architecture does make sense. If you're working on such an application, you should however ask yourself why you're using Entity Framework in the first place. If you're going to use it as a basic ORM and won't use any of the features that it provides on top of its ORM capabilities, you might be better off using a lightweight ORM library such as <a href="https://github.com/StackExchange/dapper-dot-net">Dapper</a>. Chances are it would simplify your code and offer better performance by not having the additional overhead that EF introduces to support its additional functionalities.</p>
+</section>
+<footer class="post-footer">
+<div class="post-tags">
+<strong>Tags:</strong> <a href="http://mehdi.me/tag/-net/">.NET</a> , <a href="http://mehdi.me/tag/entity-framework/">Entity Framework</a>
+</div>
+<div class="post-share" style="display: none !important;">
+<a target="_blank" href="http://www.facebook.com/sharer.php?u=http://mehdi.me/ambient-dbcontext-in-ef6/" class="share-facebook" style="display: none !important;"><span>Like</span> <span class="share-count" style="opacity: 1;">8</span></a>
+<a target="_blank" href="http://twitter.com/share?text=Managing%20DbContext%20the%20right%20way%20with%20Entity%20Framework%206:%20an%20in-depth%20guide&url=http://mehdi.me/ambient-dbcontext-in-ef6/" class="share-twitter" style="display: none !important;"><span>Tweet</span> <span class="share-count"></span></a>
+<a target="_blank" href="http://plus.google.com/share?url=http://mehdi.me/ambient-dbcontext-in-ef6/" class="share-google" style="display: none !important;"><span></span> <span class="share-count" style="opacity: 1;">+1</span></a>
+</div>
+</footer>
+</article>
+</main>
+<footer class="site-footer ">
+<p>Subscribe via <a href="http://mehdi.me/rss/">RSS</a></p>
+<p>Proudly published with <a href="http://tryghost.org/">Ghost</a></p>
+</footer>
+<script src="./Managing DbContext the right way with Entity Framework 6  an in-depth guide_files/jquery.min.js"></script>
+<script type="text/javascript" src="./Managing DbContext the right way with Entity Framework 6  an in-depth guide_files/plugins.js"></script>
+<script type="text/javascript" src="./Managing DbContext the right way with Entity Framework 6  an in-depth guide_files/site.js"></script>
+<script type="text/javascript" src="./Managing DbContext the right way with Entity Framework 6  an in-depth guide_files/prism.js"></script>
+<img src="./Managing DbContext the right way with Entity Framework 6  an in-depth guide_files/view.gif" alt="" style="display:none" hidden="">
+<script type="text/javascript">
+/* <![CDATA[ */
+(function(){try{var s,a,i,j,r,c,l=document.getElementsByTagName("a"),t=document.createElement("textarea");for(i=0;l.length-i;i++){try{a=l[i].getAttribute("href");if(a&&a.indexOf("/cdn-cgi/l/email-protection") > -1  && (a.length > 28)){s='';j=27+ 1 + a.indexOf("/cdn-cgi/l/email-protection");if (a.length > j) {r=parseInt(a.substr(j,2),16);for(j+=2;a.length>j&&a.substr(j,1)!='X';j+=2){c=parseInt(a.substr(j,2),16)^r;s+=String.fromCharCode(c);}j+=1;s+=a.substr(j,a.length-j);}t.innerHTML=s.replace(/</g,"&lt;").replace(/>/g,"&gt;");l[i].setAttribute("href","mailto:"+t.value);}}catch(e){}}}catch(e){}})();
+/* ]]> */
+</script>
+
+
+<style class="ublock-postload-1ae7a5f130fc79b4fdb8a4272d9426b5">.share-google,
+.share-twitter,
+.share-facebook,
+.post-share,
+[href^="https://twitter.com/share?"],
+[href^="https://twitter.com/intent/tweet?"],
+[href^="https://twitter.com/intent/retweet?tweet_id"],
+[href^="https://twitter.com/intent/follow?"],
+[href^="http://twitter.com/share?"],
+[href^="http://twitter.com/intent/tweet?"],
+[href^="http://twitter.com/home?"],
+[href^="http://twitter.com/home/?"],
+[href^="http://twitter.com/?status="],
+[href^="http://www.faceporn.net/free?"],
+[href^="https://www.facebook.com/sharer/sharer.php?u="],
+[href^="https://www.facebook.com/sharer.php?"],
+[href^="http://www.facebook.com/sharer/sharer.php?"],
+[href^="http://www.facebook.com/sharer.php?"],
+[href^="http://www.facebook.com/share.php?u="],
+[href^="http://www.linkedin.com/shareArticle?"]
+{display:none !important;}</style><div id="feedly-mini" title="feedly Mini tookit"></div></body></html>
