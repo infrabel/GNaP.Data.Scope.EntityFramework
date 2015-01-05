@@ -1,5 +1,5 @@
-DbContextScope
-==============
+GNaP.Data.Scope.EntityFramework
+===============================
 
 A simple and flexible way to manage your Entity Framework DbContext instances.
 
@@ -21,7 +21,7 @@ The repo contains a demo application that demonstrates the most common (and a fe
 
 I would highly recommend reading the following blog post first. It examines in great details the most commonly used approaches to manage DbContext instances and explains how `DbContextScope` addresses their shortcomings and simplifies DbContext management: [Managing DbContext the right way with Entity Framework 6: an in-depth guide](http://mehdi.me/ambient-dbcontext-in-ef6/). 
 
-###Overview
+### Overview
 
 This is the `DbContextScope` interface:
 
@@ -57,7 +57,7 @@ public interface IDbContextScopeFactory
 }
 ```
 
-###Typical usage
+### Typical usage
 With `DbContextScope`, your typical service method would look like this:
 
 ```language-csharp
@@ -110,7 +110,7 @@ Those `DbContext` instances are created lazily and the `DbContextScope` keeps tr
 
 You'll note that the service method doesn't need to know which type of `DbContext` will be required during the course of the business transaction. It only needs to create a `DbContextScope` and any component that needs to access the database within that scope will request the type of `DbContext` they need. 
 
-###Nesting scopes
+### Nesting scopes
 A `DbContextScope` can of course be nested. Let's say that you already have a service method that can mark a user as a premium user like this:
 
 ```language-csharp
@@ -153,7 +153,7 @@ public void MarkGroupOfUsersAsPremium(IEnumerable<Guid> userIds)
 
 This makes creating a service method that combines the logic of multiple other service methods trivial. 
 
-###Read-only scopes
+### Read-only scopes
 If a service method is read-only, having to call `SaveChanges()` on its `DbContextScope` before returning can be a pain. But not calling it isn't an option either as: 
 
 1. It will make code review and maintenance difficult (did you intend not to call `SaveChanges()` or did you forget to call it?) 
@@ -180,7 +180,7 @@ public int NumberPremiumUsers()
 }
 ```
 
-###Async support
+### Async support
 `DbContextScope` works with async execution flows as you would expect:
 
 ```language-csharp
@@ -236,7 +236,7 @@ public void RandomServiceMethod()
 }
 ```
 
-###Creating a non-nested DbContextScope
+### Creating a non-nested DbContextScope
 This is an advanced feature that I would expect most applications to never need. Tread carefully when using this as it can create tricky issues and quickly lead to a maintenance nightmare. 
 
 Sometimes, a service method may need to persist its changes to the underlying database regardless of the outcome of overall business transaction it may be part of. This would be the case if:
@@ -269,7 +269,7 @@ public void RandomServiceMethod()
 
 The major issue with doing this is that this service method will use separate `DbContext` instances than the ones used in the rest of that business transaction. Here are a few basic rules to always follow in that case in order to avoid weird bugs and maintenance nightmares:
 
-####1. Persistent entity returned by a service method must always be attached to the ambient context
+#### 1. Persistent entity returned by a service method must always be attached to the ambient context
 
 If you force the creation of a new `DbContextScope` (and therefore of new `DbContext` instances) instead of joining the ambient one, your service method must **never** return persistent entities that were created / retrieved within that new scope. This would be completely unexpected and will lead to humongous complexity.
 
@@ -280,7 +280,7 @@ Instead, either:
 - Don't return persistent entities. This is the easiest, cleanest, most foolproof method. E.g. if your service creates a new domain model object, don't return it. Return its ID instead and let the client load the entity in its own `DbContext` instance if it needs the actual object.
 - If you absolutely need to return a persistent entity, switch back to the ambient context, load the entity you want to return in the ambient context and return that.
 
-####2. Upon exit, a service method must make sure that all modifications it made to persistent entities have been replicated in the parent scope
+#### 2. Upon exit, a service method must make sure that all modifications it made to persistent entities have been replicated in the parent scope
 
 If your service method forces the creation of a new `DbContextScope` and then modifies persistent entities in that new scope, it must make sure that the parent ambient scope (if any) can "see" those modification when it returns. 
 
@@ -316,6 +316,22 @@ public void RandomServiceMethod(Guid accountId)
 }
 ```
 
+## Copyright
 
+### Original DbContextScope Code
 
+Copyright (c) 2014 Mehdi El Gueddari
 
+### Infrabel Modifications
+
+Copyright © 2015 Infrabel and contributors.
+
+## License
+
+### Original DbContextScope Code
+
+DbContextScope is licensed under [MIT](http://choosealicense.com/licenses/mit/ "Read more about the MIT License"). Refer to [LICENSE](https://github.com/infrabel/GNaP.Data.Scope.EntityFramework/blob/2a0511ce9482caada3407102f52886fc9da67e3d/LICENSE) for more information.
+
+### Infrabel Modifications
+
+GNaP.Data.Scope.EntityFramework is licensed under [BSD (3-Clause)](http://choosealicense.com/licenses/bsd-3-clause/ "Read more about the BSD (3-Clause) License"). Refer to [LICENSE](https://github.com/infrabel/GNaP.Data.Scope.EntityFramework/blob/master/LICENSE) for more information.
