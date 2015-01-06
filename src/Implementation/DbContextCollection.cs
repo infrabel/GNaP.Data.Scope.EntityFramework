@@ -174,7 +174,7 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
                 {
                     if (!_readOnly)
                     {
-                        c += await dbContext.SaveChangesAsync(cancelToken);
+                        c += await dbContext.SaveChangesAsync(cancelToken).ConfigureAwait(false);
                     }
 
                     // If we've started an explicit database transaction, time to commit it now.
