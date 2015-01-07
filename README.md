@@ -316,6 +316,10 @@ public void RandomServiceMethod(Guid accountId)
 }
 ```
 
+## NuGet
+
+[GNaP.Data.Scope.EntityFramework](http://www.nuget.org/packages/GNaP.Data.Scope.EntityFramework/)
+
 ## Copyright
 
 ### Original DbContextScope Code
