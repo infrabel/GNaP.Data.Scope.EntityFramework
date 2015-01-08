@@ -14,6 +14,7 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
     using System.Data.Entity;
     using System.Data.Entity.Core.Objects;
     using System.Data.Entity.Infrastructure;
+    using System.Diagnostics;
     using System.Linq;
     using System.Runtime.CompilerServices;
     using System.Runtime.Remoting.Messaging;
@@ -21,38 +22,38 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
     using System.Threading.Tasks;
     using Interfaces;
 
-    internal class DbContextScope : IDbContextScope
+    internal class EntityFrameworkScope : IDbScope
     {
         private bool _disposed;
         private readonly bool _readOnly;
         private bool _completed;
         private readonly bool _nested;
-        private readonly DbContextScope _parentScope;
-        private readonly DbContextCollection _dbContexts;
+        private readonly EntityFrameworkScope _parentScope;
+        private readonly EntityFrameworkContextCollection _dbContexts;
 
-        public DbContextScope(IDbContextFactory dbContextFactory = null) :
-            this(joiningOption: DbContextScopeOption.JoinExisting, readOnly: false, isolationLevel: null, dbContextFactory: dbContextFactory)
+        public EntityFrameworkScope() :
+            this(joiningOption: DbScopeOption.JoinExisting, readOnly: false, isolationLevel: null)
         { }
 
-        public DbContextScope(bool readOnly, IDbContextFactory dbContextFactory = null)
-            : this(joiningOption: DbContextScopeOption.JoinExisting, readOnly: readOnly, isolationLevel: null, dbContextFactory: dbContextFactory)
+        public EntityFrameworkScope(bool readOnly)
+            : this(joiningOption: DbScopeOption.JoinExisting, readOnly: readOnly, isolationLevel: null)
         { }
 
-        public DbContextScope(DbContextScopeOption joiningOption, bool readOnly, IsolationLevel? isolationLevel, IDbContextFactory dbContextFactory = null)
+        public EntityFrameworkScope(DbScopeOption joiningOption, bool readOnly, IsolationLevel? isolationLevel)
         {
-            if (isolationLevel.HasValue && joiningOption == DbContextScopeOption.JoinExisting)
-                throw new ArgumentException("Cannot join an ambient DbContextScope when an explicit database transaction is required. When requiring explicit database transactions to be used (i.e. when the 'isolationLevel' parameter is set), you must not also ask to join the ambient context (i.e. the 'joinAmbient' parameter must be set to false).");
+            if (isolationLevel.HasValue && joiningOption == DbScopeOption.JoinExisting)
+                throw new ArgumentException("Cannot join an ambient EntityFrameworkScope when an explicit database transaction is required. When requiring explicit database transactions to be used (i.e. when the 'isolationLevel' parameter is set), you must not also ask to join the ambient context (i.e. the 'joinAmbient' parameter must be set to false).");
 
             _disposed = false;
             _completed = false;
             _readOnly = readOnly;
 
             _parentScope = GetAmbientScope();
-            if (_parentScope != null && joiningOption == DbContextScopeOption.JoinExisting)
+            if (_parentScope != null && joiningOption == DbScopeOption.JoinExisting)
             {
                 if (_parentScope._readOnly && !this._readOnly)
                 {
-                    throw new InvalidOperationException("Cannot nest a read/write DbContextScope within a read-only DbContextScope.");
+                    throw new InvalidOperationException("Cannot nest a read/write EntityFrameworkScope within a read-only EntityFrameworkScope.");
                 }
 
                 _nested = true;
@@ -61,7 +62,7 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
             else
             {
                 _nested = false;
-                _dbContexts = new DbContextCollection(readOnly, isolationLevel, dbContextFactory);
+                _dbContexts = new EntityFrameworkContextCollection(readOnly, isolationLevel);
             }
 
             SetAmbientScope(this);
@@ -75,10 +76,10 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
         public int SaveChanges()
         {
             if (_disposed)
-                throw new ObjectDisposedException("DbContextScope");
+                throw new ObjectDisposedException("EntityFrameworkScope");
 
             if (_completed)
-                throw new InvalidOperationException("You cannot call SaveChanges() more than once on a DbContextScope. A DbContextScope is meant to encapsulate a business transaction: create the scope at the start of the business transaction and then call SaveChanges() at the end. Calling SaveChanges() mid-way through a business transaction doesn't make sense and most likely mean that you should refactor your service method into two separate service method that each create their own DbContextScope and each implement a single business transaction.");
+                throw new InvalidOperationException("You cannot call SaveChanges() more than once on an EntityFrameworkScope. An EntityFrameworkScope is meant to encapsulate a business transaction: create the scope at the start of the business transaction and then call SaveChanges() at the end. Calling SaveChanges() mid-way through a business transaction doesn't make sense and most likely mean that you should refactor your service method into two separate service method that each create their own EntityFrameworkScope and each implement a single business transaction.");
 
             // Only save changes if we're not a nested scope. Otherwise, let the top-level scope
             // decide when the changes should be saved.
@@ -104,10 +105,10 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
                 throw new ArgumentNullException("cancelToken");
 
             if (_disposed)
-                throw new ObjectDisposedException("DbContextScope");
+                throw new ObjectDisposedException("EntityFrameworkScope");
 
             if (_completed)
-                throw new InvalidOperationException("You cannot call SaveChanges() more than once on a DbContextScope. A DbContextScope is meant to encapsulate a business transaction: create the scope at the start of the business transaction and then call SaveChanges() at the end. Calling SaveChanges() mid-way through a business transaction doesn't make sense and most likely mean that you should refactor your service method into two separate service method that each create their own DbContextScope and each implement a single business transaction.");
+                throw new InvalidOperationException("You cannot call SaveChanges() more than once on an EntityFrameworkScope. An EntityFrameworkScope is meant to encapsulate a business transaction: create the scope at the start of the business transaction and then call SaveChanges() at the end. Calling SaveChanges() mid-way through a business transaction doesn't make sense and most likely mean that you should refactor your service method into two separate service method that each create their own EntityFrameworkScope and each implement a single business transaction.");
 
             // Only save changes if we're not a nested scope. Otherwise, let the top-level scope
             // decide when the changes should be saved.
@@ -275,7 +276,7 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
                     }
                     catch (Exception e)
                     {
-                        System.Diagnostics.Debug.WriteLine(e);
+                        Debug.WriteLine(e);
                     }
 
                     _completed = true;
@@ -287,7 +288,7 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
             // Pop ourself from the ambient scope stack
             var currentAmbientScope = GetAmbientScope();
             if (currentAmbientScope != this) // This is a serious programming error. Worth throwing here.
-                throw new InvalidOperationException("DbContextScope instances must be disposed of in the order in which they were created!");
+                throw new InvalidOperationException("EntityFrameworkScope instances must be disposed of in the order in which they were created!");
 
             RemoveAmbientScope();
 
@@ -318,7 +319,7 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
                      * be in one of two scenario:
                      *
                      * - If the developer who created the parallel task was mindful to force the creation of
-                     * a new scope in the parallel task (with IDbContextScopeFactory.CreateNew() instead of
+                     * a new scope in the parallel task (with IDbScopeFactory.CreateNew() instead of
                      * JoinOrCreate()) then no harm has been done. We haven't tried to access the same DbContext
                      * instance from multiple threads.
                      *
@@ -330,17 +331,17 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
                      * So just record a warning here. Hopefully someone will see it and will fix the code.
                      */
 
-                    var message = @"PROGRAMMING ERROR - When attempting to dispose a DbContextScope, we found that our parent DbContextScope has already been disposed! This means that someone started a parallel flow of execution (e.g. created a TPL task, created a thread or enqueued a work item on the ThreadPool) within the context of a DbContextScope without suppressing the ambient context first. 
+                    var message = @"PROGRAMMING ERROR - When attempting to dispose a EntityFrameworkScope, we found that our parent EntityFrameworkScope has already been disposed! This means that someone started a parallel flow of execution (e.g. created a TPL task, created a thread or enqueued a work item on the ThreadPool) within the context of a EntityFrameworkScope without suppressing the ambient context first. 
 
 In order to fix this:
 1) Look at the stack trace below - this is the stack trace of the parallel task in question.
 2) Find out where this parallel task was created.
-3) Change the code so that the ambient context is suppressed before the parallel task is created. You can do this with IDbContextScopeFactory.SuppressAmbientContext() (wrap the parallel task creation code block in this). 
+3) Change the code so that the ambient context is suppressed before the parallel task is created. You can do this with IDbScopeFactory.SuppressAmbientScope() (wrap the parallel task creation code block in this). 
 
 Stack Trace:
 " + Environment.StackTrace;
 
-                    System.Diagnostics.Debug.WriteLine(message);
+                    Debug.WriteLine(message);
                 }
                 else
                 {
@@ -349,7 +350,6 @@ Stack Trace:
             }
 
             _disposed = true;
-
         }
 
         #region Ambient Context Logic
@@ -433,14 +433,14 @@ Stack Trace:
         // to the DbContextScope instances we store in there, allowing them to get GCed.
         // The doc for ConditionalWeakTable isn't the best. This SO anser does a good job at explaining what
         // it does: http://stackoverflow.com/a/18613811
-        private static readonly ConditionalWeakTable<InstanceIdentifier, DbContextScope> DbContextScopeInstances = new ConditionalWeakTable<InstanceIdentifier, DbContextScope>();
+        private static readonly ConditionalWeakTable<InstanceIdentifier, EntityFrameworkScope> DbContextScopeInstances = new ConditionalWeakTable<InstanceIdentifier, EntityFrameworkScope>();
 
         private readonly InstanceIdentifier _instanceIdentifier = new InstanceIdentifier();
 
         /// <summary>
         /// Makes the provided 'dbContextScope' available as the the ambient scope via the CallContext.
         /// </summary>
-        internal static void SetAmbientScope(DbContextScope newAmbientScope)
+        internal static void SetAmbientScope(EntityFrameworkScope newAmbientScope)
         {
             if (newAmbientScope == null)
                 throw new ArgumentNullException("newAmbientScope");
@@ -485,7 +485,7 @@ Stack Trace:
         /// <summary>
         /// Get the current ambient scope or null if no ambient scope has been setup.
         /// </summary>
-        internal static DbContextScope GetAmbientScope()
+        internal static EntityFrameworkScope GetAmbientScope()
         {
             // Retrieve the identifier of the ambient scope (if any)
             var instanceIdentifier = CallContext.LogicalGetData(AmbientDbContextScopeKey) as InstanceIdentifier;
@@ -493,7 +493,7 @@ Stack Trace:
                 return null; // Either no ambient context has been set or we've crossed an app domain boundary and have (intentionally) lost the ambient context
 
             // Retrieve the DbContextScope instance corresponding to this identifier
-            DbContextScope ambientScope;
+            EntityFrameworkScope ambientScope;
             if (DbContextScopeInstances.TryGetValue(instanceIdentifier, out ambientScope))
                 return ambientScope;
 
@@ -510,7 +510,7 @@ Stack Trace:
             // the GC would be able to collect it. Once collected by the GC, our ConditionalWeakTable will return
             // null when queried for that instance. In that case, we're OK. This is a programming error
             // but our use of a ConditionalWeakTable prevented a leak.
-            System.Diagnostics.Debug.WriteLine("Programming error detected. Found a reference to an ambient DbContextScope in the CallContext but didn't have an instance for it in our DbContextScopeInstances table. This most likely means that this DbContextScope instance wasn't disposed of properly. DbContextScope instance must always be disposed. Review the code for any DbContextScope instance used outside of a 'using' block and fix it so that all DbContextScope instances are disposed of.");
+            Debug.WriteLine("Programming error detected. Found a reference to an ambient EntityFrameworkScope in the CallContext but didn't have an instance for it in our DbContextScopeInstances table. This most likely means that this EntityFrameworkScope instance wasn't disposed of properly. EntityFrameworkScope instance must always be disposed. Review the code for any EntityFrameworkScope instance used outside of a 'using' block and fix it so that all EntityFrameworkScope instances are disposed of.");
             return null;
         }
 
@@ -526,7 +526,5 @@ Stack Trace:
      * an empty class is cheaper and uses up less memory than generating
      * a unique string.
     */
-    internal class InstanceIdentifier : MarshalByRefObject
-    { }
+    internal class InstanceIdentifier : MarshalByRefObject { }
 }
-

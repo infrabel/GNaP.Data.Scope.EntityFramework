@@ -12,10 +12,10 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
     using System.Collections.Generic;
     using System.Data;
     using System.Data.Entity;
+    using System.Diagnostics;
     using System.Runtime.ExceptionServices;
     using System.Threading;
     using System.Threading.Tasks;
-    using Interfaces;
 
     /// <summary>
     /// As its name suggests, DbContextCollection maintains a collection of DbContext instances.
@@ -29,19 +29,18 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
     /// instances it created when its Commit() or Rollback() method is called.
     ///
     /// </summary>
-    internal class DbContextCollection
+    internal class EntityFrameworkContextCollection
     {
         private readonly Dictionary<Type, DbContext> _initializedDbContexts;
         private readonly Dictionary<DbContext, DbContextTransaction> _transactions;
         private IsolationLevel? _isolationLevel;
-        private readonly IDbContextFactory _dbContextFactory;
         private bool _disposed;
         private bool _completed;
         private readonly bool _readOnly;
 
         internal Dictionary<Type, DbContext> InitializedDbContexts { get { return _initializedDbContexts; } }
 
-        public DbContextCollection(bool readOnly = false, IsolationLevel? isolationLevel = null, IDbContextFactory dbContextFactory = null)
+        public EntityFrameworkContextCollection(bool readOnly = false, IsolationLevel? isolationLevel = null)
         {
             _disposed = false;
             _completed = false;
@@ -51,13 +50,12 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
 
             _readOnly = readOnly;
             _isolationLevel = isolationLevel;
-            _dbContextFactory = dbContextFactory;
         }
 
         public TDbContext Get<TDbContext>() where TDbContext : DbContext
         {
             if (_disposed)
-                throw new ObjectDisposedException("DbContextCollection");
+                throw new ObjectDisposedException("EntityFrameworkContextCollection");
 
             var requestedType = typeof(TDbContext);
 
@@ -66,9 +64,7 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
 
             // First time we've been asked for this particular DbContext type.
             // Create one, cache it and start its database transaction if needed.
-            var dbContext = _dbContextFactory != null
-                ? _dbContextFactory.CreateDbContext<TDbContext>()
-                : Activator.CreateInstance<TDbContext>();
+            var dbContext = Activator.CreateInstance<TDbContext>();
 
             _initializedDbContexts.Add(requestedType, dbContext);
 
@@ -258,7 +254,7 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
                 }
                 catch (Exception e)
                 {
-                    System.Diagnostics.Debug.WriteLine(e);
+                    Debug.WriteLine(e);
                 }
             }
 
@@ -270,7 +266,7 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
                 }
                 catch (Exception e)
                 {
-                    System.Diagnostics.Debug.WriteLine(e);
+                    Debug.WriteLine(e);
                 }
             }
 

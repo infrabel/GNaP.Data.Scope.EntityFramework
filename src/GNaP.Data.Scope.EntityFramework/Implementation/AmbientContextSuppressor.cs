@@ -12,12 +12,12 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
 
     internal class AmbientContextSuppressor : IDisposable
     {
-        private DbContextScope _savedScope;
+        private EntityFrameworkScope _savedScope;
         private bool _disposed;
 
         public AmbientContextSuppressor()
         {
-            _savedScope = DbContextScope.GetAmbientScope();
+            _savedScope = EntityFrameworkScope.GetAmbientScope();
 
             // We're hiding the ambient scope but not removing its instance
             // altogether. This is to be tolerant to some programming errors.
@@ -39,7 +39,7 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
             // that happen. Hiding the ambient scope (i.e. clearing the CallContext
             // in our execution flow but leaving the ambient scope instance untouched)
             // is safe.
-            DbContextScope.HideAmbientScope();
+            EntityFrameworkScope.HideAmbientScope();
         }
 
         public void Dispose()
@@ -49,7 +49,7 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
 
             if (_savedScope != null)
             {
-                DbContextScope.SetAmbientScope(_savedScope);
+                EntityFrameworkScope.SetAmbientScope(_savedScope);
                 _savedScope = null;
             }
 

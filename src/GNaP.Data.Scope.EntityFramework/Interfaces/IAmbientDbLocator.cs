@@ -13,10 +13,10 @@ namespace GNaP.Data.Scope.EntityFramework.Interfaces
     /// <summary>
     /// Convenience methods to retrieve ambient DbContext instances.
     /// </summary>
-    public interface IAmbientDbContextLocator
+    public interface IAmbientDbLocator
     {
         /// <summary>
-        /// If called within the scope of a DbContextScope, gets or creates
+        /// If called within the scope of an EntityFrameworkScope, gets or creates
         /// the ambient DbContext instance for the provided DbContext type.
         ///
         /// Otherwise returns null.

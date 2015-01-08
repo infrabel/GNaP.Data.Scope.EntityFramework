@@ -6,6 +6,7 @@
     using CommandModel;
     using DatabaseContext;
     using Implementation;
+    using Interfaces;
     using Repositories;
 
     class Program
@@ -13,14 +14,14 @@
         static void Main(string[] args)
         {
             //-- Poor-man DI - build our dependencies by hand for this demo
-            var dbContextScopeFactory = new DbContextScopeFactory();
-            var ambientDbContextLocator = new AmbientDbContextLocator();
-            var userRepository = new UserRepository(ambientDbContextLocator);
+            IDbScopeFactory dbScopeFactory = new EntityFrameworkScopeFactory();
+            IAmbientDbLocator ambientDbLocator = new EntityFrameworkAmbientLocator();
+            IUserRepository userRepository = new UserRepository(ambientDbLocator);
 
-            var userCreationService = new UserCreationService(dbContextScopeFactory, userRepository);
-            var userQueryService = new UserQueryService(dbContextScopeFactory, userRepository);
-            var userEmailService = new UserEmailService(dbContextScopeFactory);
-            var userCreditScoreService = new UserCreditScoreService(dbContextScopeFactory);
+            var userCreationService = new UserCreationService(dbScopeFactory, userRepository);
+            var userQueryService = new UserQueryService(dbScopeFactory, userRepository);
+            var userEmailService = new UserEmailService(dbScopeFactory);
+            var userCreditScoreService = new UserCreditScoreService(dbScopeFactory);
 
             try
             {
@@ -41,7 +42,7 @@
                 Console.WriteLine("Press enter to continue...");
                 Console.ReadLine();
 
-                //-- Demo of nested DbContextScopes
+                //-- Demo of nested DbScopes
                 Console.WriteLine("Creating 2 new users called John and Jeanne in an atomic transaction...");
                 var johnSpec = new UserCreationSpec("John", "john@example.com");
                 var jeanneSpec = new UserCreationSpec("Jeanne", "jeanne@example.com");
@@ -55,7 +56,7 @@
                 Console.WriteLine("Press enter to continue...");
                 Console.ReadLine();
 
-                //-- Demo of nested DbContextScopes in the face of an exception.
+                //-- Demo of nested DbScopes in the face of an exception.
                 // If any of the provided users failed to get persisted, none should get persisted.
                 Console.WriteLine("Creating 2 new users called Julie and Marc in an atomic transaction. Will make the persistence of the second user fail intentionally in order to test the atomicity of the transaction...");
                 var julieSpec = new UserCreationSpec("Julie", "julie@example.com");
@@ -78,7 +79,7 @@
                 Console.WriteLine("Press enter to continue...");
                 Console.ReadLine();
 
-                //-- Demo of DbContextScope within an async flow
+                //-- Demo of DbScope within an async flow
                 Console.WriteLine("Trying to retrieve two users John and Jeanne sequentially in an asynchronous manner...");
                 // We're going to block on the async task here as we don't have a choice. No risk of deadlocking in any case as console apps
                 // don't have a synchronization context.
@@ -98,11 +99,11 @@
                 Console.WriteLine("Press enter to continue...");
                 Console.ReadLine();
 
-                //-- Demo of disabling the DbContextScope nesting behaviour in order to force the persistence of changes made to entities
+                //-- Demo of disabling the DbScope nesting behaviour in order to force the persistence of changes made to entities
                 // This is a pretty advanced feature that you can safely ignore until you actually need it.
                 Console.WriteLine("Will simulate sending a Welcome email to John...");
 
-                using (var parentScope = dbContextScopeFactory.Create())
+                using (var parentScope = dbScopeFactory.Create())
                 {
                     var parentDbContext = parentScope.Get<UserManagementDbContext>();
 
@@ -119,13 +120,13 @@
 
                     // Note that even though we're not calling SaveChanges() in the parent scope here, the changes
                     // made to John by SendWelcomeEmail() will remain persisted in the database as SendWelcomeEmail()
-                    // forced the creation of a new DbContextScope.
+                    // forced the creation of a new DbScope.
                 }
 
                 Console.WriteLine("Press enter to continue...");
                 Console.ReadLine();
 
-                //-- Demonstration of DbContextScope and parallel programming
+                //-- Demonstration of DbScope and parallel programming
                 Console.WriteLine("Calculating and storing the credit score of all users in the database in parallel...");
                 userCreditScoreService.UpdateCreditScoreForAllUsers();
                 Console.WriteLine("Done.");

@@ -8,20 +8,20 @@
 
     public class UserEmailService
     {
-        private readonly IDbContextScopeFactory _dbContextScopeFactory;
+        private readonly IDbScopeFactory _dbScopeFactory;
 
-        public UserEmailService(IDbContextScopeFactory dbContextScopeFactory)
+        public UserEmailService(IDbScopeFactory dbScopeFactory)
         {
-            if (dbContextScopeFactory == null)
-                throw new ArgumentNullException("dbContextScopeFactory");
+            if (dbScopeFactory == null)
+                throw new ArgumentNullException("dbScopeFactory");
 
-            _dbContextScopeFactory = dbContextScopeFactory;
+            _dbScopeFactory = dbScopeFactory;
         }
 
         public void SendWelcomeEmail(Guid userId)
         {
             /*
-             * Demo of forcing the creation of a new DbContextScope
+             * Demo of forcing the creation of a new DbScope
              * to ensure that changes made to the model in this service
              * method are persisted even if that method happens to get
              * called within the scope of a wider business transaction
@@ -46,11 +46,11 @@
             // Otherwise, we would risk spamming our users with repeated Welcome
             // emails.
 
-            // Force the creation of a new DbContextScope so that the changes we make here are
+            // Force the creation of a new DbScope so that the changes we make here are
             // guaranteed to get persisted regardless of what happens after this method has completed.
-            using (var dbContextScope = _dbContextScopeFactory.Create(DbContextScopeOption.ForceCreateNew))
+            using (var dbScope = _dbScopeFactory.Create(DbScopeOption.ForceCreateNew))
             {
-                var dbContext = dbContextScope.Get<UserManagementDbContext>();
+                var dbContext = dbScope.Get<UserManagementDbContext>();
                 var user = dbContext.Users.Find(userId);
 
                 if (user == null)
@@ -62,12 +62,12 @@
                     user.WelcomeEmailSent = true;
                 }
 
-                dbContextScope.SaveChanges();
+                dbScope.SaveChanges();
 
-                // When you force the creation of a new DbContextScope, you must force the parent
+                // When you force the creation of a new DbScope, you must force the parent
                 // scope (if any) to reload the entities you've modified here. Otherwise, the method calling
                 // you might not be able to see the changes you made here.
-                dbContextScope.RefreshEntitiesInParentScope(new List<User> { user });
+                dbScope.RefreshEntitiesInParentScope(new List<User> { user });
             }
         }
 

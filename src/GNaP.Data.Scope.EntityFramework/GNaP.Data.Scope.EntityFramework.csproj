@@ -52,17 +52,16 @@
       <Link>CommonAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="Implementation\AmbientContextSuppressor.cs" />
-    <Compile Include="Implementation\AmbientDbContextLocator.cs" />
-    <Compile Include="Implementation\DbContextCollection.cs" />
-    <Compile Include="Implementation\DbContextReadOnlyScope.cs" />
-    <Compile Include="Implementation\DbContextScope.cs" />
-    <Compile Include="Implementation\DbContextScopeFactory.cs" />
-    <Compile Include="Interfaces\DbContextScopeOption.cs" />
-    <Compile Include="Interfaces\IAmbientDbContextLocator.cs" />
-    <Compile Include="Interfaces\IDbContextFactory.cs" />
-    <Compile Include="Interfaces\IDbContextReadOnlyScope.cs" />
-    <Compile Include="Interfaces\IDbContextScope.cs" />
-    <Compile Include="Interfaces\IDbContextScopeFactory.cs" />
+    <Compile Include="Implementation\EntityFrameworkAmbientLocator.cs" />
+    <Compile Include="Implementation\EntityFrameworkContextCollection.cs" />
+    <Compile Include="Implementation\EntityFrameworkReadOnlyScope.cs" />
+    <Compile Include="Implementation\EntityFrameworkScope.cs" />
+    <Compile Include="Implementation\EntityFrameworkScopeFactory.cs" />
+    <Compile Include="Interfaces\DbScopeOption.cs" />
+    <Compile Include="Interfaces\IAmbientDbLocator.cs" />
+    <Compile Include="Interfaces\IDbReadOnlyScope.cs" />
+    <Compile Include="Interfaces\IDbScope.cs" />
+    <Compile Include="Interfaces\IDbScopeFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

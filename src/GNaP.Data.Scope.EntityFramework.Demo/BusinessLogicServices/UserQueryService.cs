@@ -11,38 +11,38 @@
     using Repositories;
 
     /*
-	 * Example business logic service implementing query functionalities (i.e. read actions).
-	 */
+     * Example business logic service implementing query functionalities (i.e. read actions).
+     */
     public class UserQueryService
     {
-        private readonly IDbContextScopeFactory _dbContextScopeFactory;
+        private readonly IDbScopeFactory _dbScopeFactory;
         private readonly IUserRepository _userRepository;
 
-        public UserQueryService(IDbContextScopeFactory dbContextScopeFactory, IUserRepository userRepository)
+        public UserQueryService(IDbScopeFactory dbScopeFactory, IUserRepository userRepository)
         {
-            if (dbContextScopeFactory == null)
-                throw new ArgumentNullException("dbContextScopeFactory");
+            if (dbScopeFactory == null)
+                throw new ArgumentNullException("dbScopeFactory");
 
             if (userRepository == null)
                 throw new ArgumentNullException("userRepository");
 
-            _dbContextScopeFactory = dbContextScopeFactory;
+            _dbScopeFactory = dbScopeFactory;
             _userRepository = userRepository;
         }
 
         public User GetUser(Guid userId)
         {
             /*
-             * An example of using DbContextScope for read-only queries.
+             * An example of using DbScope for read-only queries.
              * Here, we access the Entity Framework DbContext directly from
              * the business logic service class.
              *
              * Calling SaveChanges() is not necessary here (and in fact not
              * possible) since we created a read-only scope.
              */
-            using (var dbContextScope = _dbContextScopeFactory.CreateReadOnly())
+            using (var dbScope = _dbScopeFactory.CreateReadOnly())
             {
-                var dbContext = dbContextScope.Get<UserManagementDbContext>();
+                var dbContext = dbScope.Get<UserManagementDbContext>();
                 var user = dbContext.Users.Find(userId);
 
                 if (user == null)
@@ -54,9 +54,9 @@
 
         public IEnumerable<User> GetUsers(params Guid[] userIds)
         {
-            using (var dbContextScope = _dbContextScopeFactory.CreateReadOnly())
+            using (var dbScope = _dbScopeFactory.CreateReadOnly())
             {
-                var dbContext = dbContextScope.Get<UserManagementDbContext>();
+                var dbContext = dbScope.Get<UserManagementDbContext>();
                 return dbContext.Users.Where(u => userIds.Contains(u.Id)).ToList();
             }
         }
@@ -71,13 +71,13 @@
              * repository will need, about creating the DbContext instance or about passing
              * DbContext instances around.
              *
-             * The DbContextScope will take care of creating the necessary DbContext instances
+             * The DbScope will take care of creating the necessary DbContext instances
              * and making them available as ambient contexts for our repository layer to use.
              * It will also guarantee that only one instance of any given DbContext type exists
              * within its scope ensuring that all persistent entities managed within that scope
              * are attached to the same DbContext.
              */
-            using (_dbContextScopeFactory.CreateReadOnly())
+            using (_dbScopeFactory.CreateReadOnly())
             {
                 var user = _userRepository.Get(userId);
 
@@ -91,10 +91,10 @@
         public async Task<IList<User>> GetTwoUsersAsync(Guid userId1, Guid userId2)
         {
             /*
-             * A very contrived example of ambient DbContextScope within an async flow.
+             * A very contrived example of ambient DbScope within an async flow.
              *
              * Note that the ConfigureAwait(false) calls here aren't strictly necessary
-             * and are unrelated to DbContextScope. You can remove them if you want and
+             * and are unrelated to DbScope. You can remove them if you want and
              * the code will run in the same way. It is however good practice to configure
              * all your awaitables in library code to not continue
              * on the captured synchronization context. It avoids having to pay the overhead
@@ -109,19 +109,19 @@
              * more details.
              */
 
-            using (_dbContextScopeFactory.CreateReadOnly())
+            using (_dbScopeFactory.CreateReadOnly())
             {
                 var user1 = await _userRepository.GetAsync(userId1).ConfigureAwait(false);
 
                 // We're now in the continuation of the first async task. This is most
                 // likely executing in a thread from the ThreadPool, i.e. in a different
-                // thread that the one where we created our DbContextScope. Our ambient
-                // DbContextScope is still available here however, which allows the call
+                // thread that the one where we created our DbScope. Our ambient
+                // DbScope is still available here however, which allows the call
                 // below to succeed.
 
                 var user2 = await _userRepository.GetAsync(userId2).ConfigureAwait(false);
 
-                // In other words, DbContextScope works with async execution flow as you'd expect:
+                // In other words, DbScope works with async execution flow as you'd expect:
                 // It Just Works.
 
                 return new List<User> { user1, user2 }.Where(u => u != null).ToList();
@@ -136,7 +136,7 @@
              * Read the comment for CreateReadOnlyWithTransaction() before using this overload
              * as there are gotchas when doing this!
              */
-            using (_dbContextScopeFactory.CreateReadOnlyWithTransaction(IsolationLevel.ReadUncommitted))
+            using (_dbScopeFactory.CreateReadOnlyWithTransaction(IsolationLevel.ReadUncommitted))
             {
                 return _userRepository.Get(userId);
             }

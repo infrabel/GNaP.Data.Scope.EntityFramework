@@ -5,15 +5,16 @@
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
  */
+
 namespace GNaP.Data.Scope.EntityFramework.Interfaces
 {
     /// <summary>
-    /// Indicates whether or not a new DbContextScope will join the ambient scope.
+    /// Indicates whether or not a new EntityFrameworkScope will join the ambient scope.
     /// </summary>
-    public enum DbContextScopeOption
+    public enum DbScopeOption
     {
         /// <summary>
-        /// Join the ambient DbContextScope if one exists. Creates a new
+        /// Join the ambient EntityFrameworkScope if one exists. Creates a new
         /// one otherwise.
         ///
         /// <para>
@@ -27,8 +28,8 @@ namespace GNaP.Data.Scope.EntityFramework.Interfaces
         JoinExisting,
 
         /// <summary>
-        /// Ignore the ambient DbContextScope (if any) and force the creation of
-        /// a new DbContextScope.
+        /// Ignore the ambient EntityFrameworkScope (if any) and force the creation of
+        /// a new EntityFrameworkScope.
         ///
         /// This is an advanced feature that should be used with great care.
         ///

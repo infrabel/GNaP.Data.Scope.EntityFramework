@@ -7,22 +7,22 @@
     using Repositories;
 
     /*
-	 * Example business logic service implementing command functionalities (i.e. create / update actions).
-	 */
+     * Example business logic service implementing command functionalities (i.e. create / update actions).
+     */
     public class UserCreationService
     {
-        private readonly IDbContextScopeFactory _dbContextScopeFactory;
+        private readonly IDbScopeFactory _dbScopeFactory;
         private readonly IUserRepository _userRepository;
 
-        public UserCreationService(IDbContextScopeFactory dbContextScopeFactory, IUserRepository userRepository)
+        public UserCreationService(IDbScopeFactory dbScopeFactory, IUserRepository userRepository)
         {
-            if (dbContextScopeFactory == null)
-                throw new ArgumentNullException("dbContextScopeFactory");
+            if (dbScopeFactory == null)
+                throw new ArgumentNullException("dbScopeFactory");
 
             if (userRepository == null)
                 throw new ArgumentNullException("userRepository");
 
-            _dbContextScopeFactory = dbContextScopeFactory;
+            _dbScopeFactory = dbScopeFactory;
             _userRepository = userRepository;
         }
 
@@ -34,10 +34,10 @@
             userToCreate.Validate();
 
             /*
-             * Typical usage of DbContextScope for a read-write business transaction.
+             * Typical usage of DbScope for a read-write business transaction.
              * It's as simple as it looks.
              */
-            using (var dbContextScope = _dbContextScopeFactory.Create())
+            using (var dbScope = _dbScopeFactory.Create())
             {
                 //-- Build domain model
                 var user = new User
@@ -51,14 +51,14 @@
 
                 //-- Persist
                 _userRepository.Add(user);
-                dbContextScope.SaveChanges();
+                dbScope.SaveChanges();
             }
         }
 
         public void CreateListOfUsers(params UserCreationSpec[] usersToCreate)
         {
             /*
-             * Example of DbContextScope nesting in action.
+             * Example of DbScope nesting in action.
              *
              * We already have a service method - CreateUser() - that knows how to create a new user
              * and implements all the business rules around the creation of a new user
@@ -74,15 +74,15 @@
              * or none of them will. It would be disastrous to have a partial failure here
              * and end up with some users but not all having been created.
              *
-             * DbContextScope makes this trivial to implement.
+             * DbScope makes this trivial to implement.
              *
-             * The inner DbContextScope instance that the CreateUser() method creates
+             * The inner DbScope instance that the CreateUser() method creates
              * will join our top-level scope. This ensures that the same DbContext instance is
              * going to be used throughout this business transaction.
              *
              */
 
-            using (var dbContextScope = _dbContextScopeFactory.Create())
+            using (var dbScope = _dbScopeFactory.Create())
             {
                 foreach (var toCreate in usersToCreate)
                 {
@@ -90,20 +90,20 @@
                 }
 
                 // All the changes will get persisted here
-                dbContextScope.SaveChanges();
+                dbScope.SaveChanges();
             }
         }
 
         public void CreateListOfUsersWithIntentionalFailure(params UserCreationSpec[] usersToCreate)
         {
             /*
-             * Here, we'll verify that inner DbContextScopes really join the parent scope and
+             * Here, we'll verify that inner DbScopes really join the parent scope and
              * don't persist their changes until the parent scope completes successfully.
              */
 
             var firstUser = true;
 
-            using (var dbContextScope = _dbContextScopeFactory.Create())
+            using (var dbScope = _dbScopeFactory.Create())
             {
                 foreach (var toCreate in usersToCreate)
                 {
@@ -123,7 +123,7 @@
                     }
                 }
 
-                dbContextScope.SaveChanges();
+                dbScope.SaveChanges();
             }
         }
     }
