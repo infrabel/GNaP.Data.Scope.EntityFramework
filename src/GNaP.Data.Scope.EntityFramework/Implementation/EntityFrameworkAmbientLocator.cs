@@ -11,11 +11,11 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
     using System.Data.Entity;
     using Interfaces;
 
-    public class AmbientDbContextLocator : IAmbientDbContextLocator
+    public class EntityFrameworkAmbientLocator : IAmbientDbLocator
     {
         public TDbContext Get<TDbContext>() where TDbContext : DbContext
         {
-            var ambientDbContextScope = DbContextScope.GetAmbientScope();
+            var ambientDbContextScope = EntityFrameworkScope.GetAmbientScope();
             return ambientDbContextScope == null ? null : ambientDbContextScope.Get<TDbContext>();
         }
     }

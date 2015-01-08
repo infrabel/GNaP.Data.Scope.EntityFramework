@@ -12,13 +12,13 @@ namespace GNaP.Data.Scope.EntityFramework.Interfaces
     using System.Data;
 
     /// <summary>
-    /// Convenience methods to create a new ambient DbContextScope. This is the prefered method
-    /// to create a DbContextScope.
+    /// Convenience methods to create a new ambient EntityFrameworkScope. This is the prefered method
+    /// to create an EntityFrameworkScope.
     /// </summary>
-    public interface IDbContextScopeFactory
+    public interface IDbScopeFactory
     {
         /// <summary>
-        /// Creates a new DbContextScope.
+        /// Creates a new EntityFrameworkScope.
         ///
         /// By default, the new scope will join the existing ambient scope. This
         /// is what you want in most cases. This ensures that the same DbContext instances
@@ -29,10 +29,10 @@ namespace GNaP.Data.Scope.EntityFramework.Interfaces
         /// is an advanced feature that should be used with great care and only if you fully understand the
         /// implications of doing this.
         /// </summary>
-        IDbContextScope Create(DbContextScopeOption joiningOption = DbContextScopeOption.JoinExisting);
+        IDbScope Create(DbScopeOption joiningOption = DbScopeOption.JoinExisting);
 
         /// <summary>
-        /// Creates a new DbContextScope for read-only queries.
+        /// Creates a new EntityFrameworkScope for read-only queries.
         ///
         /// By default, the new scope will join the existing ambient scope. This
         /// is what you want in most cases. This ensures that the same DbContext instances
@@ -43,10 +43,10 @@ namespace GNaP.Data.Scope.EntityFramework.Interfaces
         /// is an advanced feature that should be used with great care and only if you fully understand the
         /// implications of doing this.
         /// </summary>
-        IDbContextReadOnlyScope CreateReadOnly(DbContextScopeOption joiningOption = DbContextScopeOption.JoinExisting);
+        IDbReadOnlyScope CreateReadOnly(DbScopeOption joiningOption = DbScopeOption.JoinExisting);
 
         /// <summary>
-        /// Forces the creation of a new ambient DbContextScope (i.e. does not
+        /// Forces the creation of a new ambient EntityFrameworkScope (i.e. does not
         /// join the ambient scope if there is one) and wraps all DbContext instances
         /// created within that scope in an explicit database transaction with
         /// the provided isolation level.
@@ -59,10 +59,10 @@ namespace GNaP.Data.Scope.EntityFramework.Interfaces
         /// This is an advanced feature that you should use very carefully
         /// and only if you fully understand the implications of doing this.
         /// </summary>
-        IDbContextScope CreateWithTransaction(IsolationLevel isolationLevel);
+        IDbScope CreateWithTransaction(IsolationLevel isolationLevel);
 
         /// <summary>
-        /// Forces the creation of a new ambient read-only DbContextScope (i.e. does not
+        /// Forces the creation of a new ambient read-only EntityFrameworkScope (i.e. does not
         /// join the ambient scope if there is one) and wraps all DbContext instances
         /// created within that scope in an explicit database transaction with
         /// the provided isolation level.
@@ -75,18 +75,18 @@ namespace GNaP.Data.Scope.EntityFramework.Interfaces
         /// This is an advanced feature that you should use very carefully
         /// and only if you fully understand the implications of doing this.
         /// </summary>
-        IDbContextReadOnlyScope CreateReadOnlyWithTransaction(IsolationLevel isolationLevel);
+        IDbReadOnlyScope CreateReadOnlyWithTransaction(IsolationLevel isolationLevel);
 
         /// <summary>
-        /// Temporarily suppresses the ambient DbContextScope.
+        /// Temporarily suppresses the ambient EntityFrameworkScope.
         ///
-        /// Always use this if you need to  kick off parallel tasks within a DbContextScope.
+        /// Always use this if you need to  kick off parallel tasks within an EntityFrameworkScope.
         /// This will prevent the parallel tasks from using the current ambient scope. If you
-        /// were to kick off parallel tasks within a DbContextScope without suppressing the ambient
-        /// context first, all the parallel tasks would end up using the same ambient DbContextScope, which
+        /// were to kick off parallel tasks within an EntityFrameworkScope without suppressing the ambient
+        /// context first, all the parallel tasks would end up using the same ambient EntityFrameworkScope, which
         /// would result in multiple threads accesssing the same DbContext instances at the same
         /// time.
         /// </summary>
-        IDisposable SuppressAmbientContext();
+        IDisposable SuppressAmbientScope();
     }
 }
