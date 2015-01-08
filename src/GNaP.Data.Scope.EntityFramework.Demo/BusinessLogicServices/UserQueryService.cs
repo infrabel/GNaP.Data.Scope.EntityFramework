@@ -122,7 +122,7 @@
                 var user2 = await _userRepository.GetAsync(userId2).ConfigureAwait(false);
 
                 // In other words, DbContextScope works with async execution flow as you'd expect:
-                // It Just Works. 
+                // It Just Works.
 
                 return new List<User> { user1, user2 }.Where(u => u != null).ToList();
             }
