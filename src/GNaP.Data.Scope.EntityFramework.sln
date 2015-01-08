@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo", "Demo\Demo.csproj", "{977FC0C6-4FDF-4DD9-AAC0-456D4D79C96C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GNaP.Data.Scope.EntityFramework.Demo", "GNaP.Data.Scope.EntityFramework.Demo\GNaP.Data.Scope.EntityFramework.Demo.csproj", "{977FC0C6-4FDF-4DD9-AAC0-456D4D79C96C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GNaP.Data.Scope.EntityFramework", "GNaP.Data.Scope.EntityFramework\GNaP.Data.Scope.EntityFramework.csproj", "{BCD94CFB-8286-4BD1-8D88-C34C0C48C9EC}"
 EndProject
