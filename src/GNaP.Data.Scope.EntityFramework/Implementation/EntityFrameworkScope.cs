@@ -22,7 +22,7 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
     using System.Threading.Tasks;
     using Interfaces;
 
-    internal class EntityFrameworkScope : IDbScope
+    public class EntityFrameworkScope : IDbScope
     {
         private bool _disposed;
         private readonly bool _readOnly;
