@@ -8,6 +8,7 @@
 
 namespace GNaP.Data.Scope.EntityFramework.Implementation
 {
+    using Interfaces;
     using System;
     using System.Collections.Generic;
     using System.Data;
@@ -34,13 +35,14 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
         private readonly Dictionary<Type, DbContext> _initializedDbContexts;
         private readonly Dictionary<DbContext, DbContextTransaction> _transactions;
         private IsolationLevel? _isolationLevel;
+        private readonly IDbFactory _dbFactory;
         private bool _disposed;
         private bool _completed;
         private readonly bool _readOnly;
 
         internal Dictionary<Type, DbContext> InitializedDbContexts { get { return _initializedDbContexts; } }
 
-        public EntityFrameworkContextCollection(bool readOnly = false, IsolationLevel? isolationLevel = null)
+        public EntityFrameworkContextCollection(bool readOnly = false, IsolationLevel? isolationLevel = null, IDbFactory dbFactory = null)
         {
             _disposed = false;
             _completed = false;
@@ -50,6 +52,7 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
 
             _readOnly = readOnly;
             _isolationLevel = isolationLevel;
+            _dbFactory = dbFactory;
         }
 
         public TDbContext Get<TDbContext>() where TDbContext : DbContext
@@ -64,7 +67,9 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
 
             // First time we've been asked for this particular DbContext type.
             // Create one, cache it and start its database transaction if needed.
-            var dbContext = Activator.CreateInstance<TDbContext>();
+            var dbContext = _dbFactory != null
+                ? _dbFactory.CreateDbContext<TDbContext>()
+                : Activator.CreateInstance<TDbContext>();
 
             _initializedDbContexts.Add(requestedType, dbContext);
 
