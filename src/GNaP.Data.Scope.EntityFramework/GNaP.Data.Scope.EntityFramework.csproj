@@ -59,6 +59,7 @@
     <Compile Include="Implementation\EntityFrameworkScopeFactory.cs" />
     <Compile Include="Interfaces\DbScopeOption.cs" />
     <Compile Include="Interfaces\IAmbientDbLocator.cs" />
+    <Compile Include="Interfaces\IDbFactory.cs" />
     <Compile Include="Interfaces\IDbReadOnlyScope.cs" />
     <Compile Include="Interfaces\IDbScope.cs" />
     <Compile Include="Interfaces\IDbScopeFactory.cs" />
