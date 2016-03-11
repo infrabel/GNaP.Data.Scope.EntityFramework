@@ -16,20 +16,21 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
     {
         private readonly EntityFrameworkScope _internalScope;
 
-        public EntityFrameworkReadOnlyScope()
-            : this(joiningOption: DbScopeOption.JoinExisting, isolationLevel: null)
+        public EntityFrameworkReadOnlyScope(IDbFactory dbFactory = null)
+            : this(joiningOption: DbScopeOption.JoinExisting, isolationLevel: null, dbFactory: dbFactory)
         { }
 
-        public EntityFrameworkReadOnlyScope(IsolationLevel isolationLevel)
-            : this(joiningOption: DbScopeOption.ForceCreateNew, isolationLevel: isolationLevel)
+        public EntityFrameworkReadOnlyScope(IsolationLevel isolationLevel, IDbFactory dbFactory = null)
+            : this(joiningOption: DbScopeOption.ForceCreateNew, isolationLevel: isolationLevel, dbFactory: dbFactory)
         { }
 
-        public EntityFrameworkReadOnlyScope(DbScopeOption joiningOption, IsolationLevel? isolationLevel)
+        public EntityFrameworkReadOnlyScope(DbScopeOption joiningOption, IsolationLevel? isolationLevel, IDbFactory dbFactory = null)
         {
             _internalScope = new EntityFrameworkScope(
                 joiningOption: joiningOption,
                 readOnly: true,
-                isolationLevel: isolationLevel);
+                isolationLevel: isolationLevel,
+                dbFactory: dbFactory);
         }
 
         public void Dispose()
