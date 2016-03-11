@@ -32,7 +32,7 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
         private readonly EntityFrameworkContextCollection _dbContexts;
 
         public EntityFrameworkScope(IDbFactory dbFactory = null) :
-            this(joiningOption: DbScopeOption.JoinExisting, readOnly: false, isolationLevel: null,dbFactory: dbFactory)
+            this(joiningOption: DbScopeOption.JoinExisting, readOnly: false, isolationLevel: null, dbFactory: dbFactory)
         { }
 
         public EntityFrameworkScope(bool readOnly, IDbFactory dbFactory = null)
@@ -331,12 +331,12 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
                      * So just record a warning here. Hopefully someone will see it and will fix the code.
                      */
 
-                    var message = @"PROGRAMMING ERROR - When attempting to dispose a EntityFrameworkScope, we found that our parent EntityFrameworkScope has already been disposed! This means that someone started a parallel flow of execution (e.g. created a TPL task, created a thread or enqueued a work item on the ThreadPool) within the context of a EntityFrameworkScope without suppressing the ambient context first. 
+                    var message = @"PROGRAMMING ERROR - When attempting to dispose a EntityFrameworkScope, we found that our parent EntityFrameworkScope has already been disposed! This means that someone started a parallel flow of execution (e.g. created a TPL task, created a thread or enqueued a work item on the ThreadPool) within the context of a EntityFrameworkScope without suppressing the ambient context first.
 
 In order to fix this:
 1) Look at the stack trace below - this is the stack trace of the parallel task in question.
 2) Find out where this parallel task was created.
-3) Change the code so that the ambient context is suppressed before the parallel task is created. You can do this with IDbScopeFactory.SuppressAmbientScope() (wrap the parallel task creation code block in this). 
+3) Change the code so that the ambient context is suppressed before the parallel task is created. You can do this with IDbScopeFactory.SuppressAmbientScope() (wrap the parallel task creation code block in this).
 
 Stack Trace:
 " + Environment.StackTrace;
