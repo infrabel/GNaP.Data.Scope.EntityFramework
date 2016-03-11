@@ -14,19 +14,28 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
 
     public class EntityFrameworkScopeFactory : IDbScopeFactory
     {
+        private readonly IDbFactory _dbFactory;
+
+        public EntityFrameworkScopeFactory(IDbFactory dbFactory = null)
+        {
+            _dbFactory = dbFactory;
+        }
+
         public IDbScope Create(DbScopeOption joiningOption = DbScopeOption.JoinExisting)
         {
             return new EntityFrameworkScope(
                 joiningOption: joiningOption,
                 readOnly: false,
-                isolationLevel: null);
+                isolationLevel: null,
+                dbFactory: _dbFactory);
         }
 
         public IDbReadOnlyScope CreateReadOnly(DbScopeOption joiningOption = DbScopeOption.JoinExisting)
         {
             return new EntityFrameworkReadOnlyScope(
                 joiningOption: joiningOption,
-                isolationLevel: null);
+                isolationLevel: null,
+                dbFactory: _dbFactory);
         }
 
         public IDbScope CreateWithTransaction(IsolationLevel isolationLevel)
@@ -34,14 +43,16 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
             return new EntityFrameworkScope(
                 joiningOption: DbScopeOption.ForceCreateNew,
                 readOnly: false,
-                isolationLevel: isolationLevel);
+                isolationLevel: isolationLevel,
+                dbFactory: _dbFactory);
         }
 
         public IDbReadOnlyScope CreateReadOnlyWithTransaction(IsolationLevel isolationLevel)
         {
             return new EntityFrameworkReadOnlyScope(
                 joiningOption: DbScopeOption.ForceCreateNew,
-                isolationLevel: isolationLevel);
+                isolationLevel: isolationLevel,
+                dbFactory: _dbFactory);
         }
 
         public IDisposable SuppressAmbientScope()
