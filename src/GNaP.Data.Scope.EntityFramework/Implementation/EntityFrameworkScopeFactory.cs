@@ -16,7 +16,11 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
     {
         private readonly IDbFactory _dbFactory;
 
-        public EntityFrameworkScopeFactory(IDbFactory dbFactory = null)
+        public EntityFrameworkScopeFactory()
+            : this(dbFactory: null)
+        { }
+
+        public EntityFrameworkScopeFactory(IDbFactory dbFactory)
         {
             _dbFactory = dbFactory;
         }
