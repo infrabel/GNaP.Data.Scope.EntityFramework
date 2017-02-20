@@ -16,15 +16,27 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
     {
         private readonly EntityFrameworkScope _internalScope;
 
-        public EntityFrameworkReadOnlyScope(IDbFactory dbFactory = null)
+        public EntityFrameworkReadOnlyScope()
+            : this(joiningOption: DbScopeOption.JoinExisting, isolationLevel: null, dbFactory: null)
+        { }
+
+        public EntityFrameworkReadOnlyScope(IDbFactory dbFactory)
             : this(joiningOption: DbScopeOption.JoinExisting, isolationLevel: null, dbFactory: dbFactory)
         { }
 
-        public EntityFrameworkReadOnlyScope(IsolationLevel isolationLevel, IDbFactory dbFactory = null)
+        public EntityFrameworkReadOnlyScope(IsolationLevel isolationLevel)
+            : this(joiningOption: DbScopeOption.ForceCreateNew, isolationLevel: isolationLevel, dbFactory: null)
+        { }
+
+        public EntityFrameworkReadOnlyScope(IsolationLevel isolationLevel, IDbFactory dbFactory)
             : this(joiningOption: DbScopeOption.ForceCreateNew, isolationLevel: isolationLevel, dbFactory: dbFactory)
         { }
 
-        public EntityFrameworkReadOnlyScope(DbScopeOption joiningOption, IsolationLevel? isolationLevel, IDbFactory dbFactory = null)
+        public EntityFrameworkReadOnlyScope(DbScopeOption joiningOption, IsolationLevel? isolationLevel)
+            : this(joiningOption: joiningOption, isolationLevel: isolationLevel, dbFactory: null)
+        { }
+
+        public EntityFrameworkReadOnlyScope(DbScopeOption joiningOption, IsolationLevel? isolationLevel, IDbFactory dbFactory)
         {
             _internalScope = new EntityFrameworkScope(
                 joiningOption: joiningOption,

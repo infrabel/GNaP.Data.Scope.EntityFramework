@@ -31,15 +31,27 @@ namespace GNaP.Data.Scope.EntityFramework.Implementation
         private readonly EntityFrameworkScope _parentScope;
         private readonly EntityFrameworkContextCollection _dbContexts;
 
-        public EntityFrameworkScope(IDbFactory dbFactory = null) :
-            this(joiningOption: DbScopeOption.JoinExisting, readOnly: false, isolationLevel: null, dbFactory: dbFactory)
+        public EntityFrameworkScope()
+            : this(joiningOption: DbScopeOption.JoinExisting, readOnly: false, isolationLevel: null, dbFactory: null)
         { }
 
-        public EntityFrameworkScope(bool readOnly, IDbFactory dbFactory = null)
+        public EntityFrameworkScope(IDbFactory dbFactory)
+            : this(joiningOption: DbScopeOption.JoinExisting, readOnly: false, isolationLevel: null, dbFactory: dbFactory)
+        { }
+
+        public EntityFrameworkScope(bool readOnly)
+            : this(joiningOption: DbScopeOption.JoinExisting, readOnly: readOnly, isolationLevel: null, dbFactory: null)
+        { }
+
+        public EntityFrameworkScope(bool readOnly, IDbFactory dbFactory)
             : this(joiningOption: DbScopeOption.JoinExisting, readOnly: readOnly, isolationLevel: null, dbFactory: dbFactory)
         { }
 
-        public EntityFrameworkScope(DbScopeOption joiningOption, bool readOnly, IsolationLevel? isolationLevel, IDbFactory dbFactory = null)
+        public EntityFrameworkScope(DbScopeOption joiningOption, bool readOnly, IsolationLevel? isolationLevel)
+            : this(joiningOption: joiningOption, readOnly: readOnly, isolationLevel: isolationLevel, dbFactory: null)
+        { }
+
+        public EntityFrameworkScope(DbScopeOption joiningOption, bool readOnly, IsolationLevel? isolationLevel, IDbFactory dbFactory)
         {
             if (isolationLevel.HasValue && joiningOption == DbScopeOption.JoinExisting)
                 throw new ArgumentException("Cannot join an ambient EntityFrameworkScope when an explicit database transaction is required. When requiring explicit database transactions to be used (i.e. when the 'isolationLevel' parameter is set), you must not also ask to join the ambient context (i.e. the 'joinAmbient' parameter must be set to false).");
